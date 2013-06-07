@@ -1,0 +1,27 @@
+The Debian Package btpd-el
+--------------------------
+
+After installing this package you can activate Btpd control panel
+in Emacs either via main menu or by typing "M-x btpd <RET>".
+From this panel you can add new torrents or do whatever you want
+with the listed ones by pressing respective buttons.
+To access content of a downloaded torrent simply click
+on it's name in the control panel. The virtual dired buffer
+will be popped up. In this buffer you can browse the directory
+structure, copy or link files from it and do the other usual things.
+
+Alternatively you can add torrents using interactive command
+"M-x btpd-add <RET>" or browse their content by typing
+"M-x btpd-view <RET>". In dired mode a torrent file can be
+added or viewed just by pressing "M-t" or "M-RET" on it respectively.
+
+The cooperation with w3m is established automagically by altering
+w3m-content-type-alist in such way that torrent files are downloaded
+and passed to Btpd. Before starting download you will be able
+to preview the content as a virtual directory tree.
+But if you have another external viewer for BitTorrent content type
+assigned via w3m-content-type-alist, it will not be overridden.
+Moreover, this automation can be totally disabled via customization
+options.
+
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Thu, 06 Jun 2013 07:57:54 +0400

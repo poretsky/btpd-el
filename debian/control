@@ -1,0 +1,16 @@
+Source: btpd-el
+Section: net
+Priority: optional
+Maintainer: Igor B. Poretsky <poretsky@mlbox.ru>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.9.3
+
+Package: btpd-el
+Architecture: all
+Depends: emacs | emacsen, btpd (>= 0.16), ${misc:Depends}
+Suggests: w3m-el
+Description: Emacs interface for the Btpd BitTorrent client
+ This package provides more or less intuitive and simple Emacs interface
+ for Btpd BitTorrent client. It communicates with Emacs-w3m web browser
+ allowing to start torrent download just by clicking on a respective
+ link. Torrent's content can be previewed as a virtual directory tree.
