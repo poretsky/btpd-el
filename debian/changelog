@@ -1,3 +1,9 @@
+btpd-el (1.2precise1) precise; urgency=low
+
+  * Fixed hot keys for dired.
+
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Fri, 07 Jun 2013 06:47:22 +0400
+
 btpd-el (1.1precise1) precise; urgency=low
 
   * Corrected communication speed units display.

@@ -54,7 +54,7 @@
 (eval-after-load "dired"
   '(progn
      (define-key dired-mode-map (kbd "M-t") 'btpd-add-from-dired)
-     '(define-key dired-mode-map (kbd "M-RET") 'btpd-view-from-dired)))
+     (define-key dired-mode-map (kbd "M-RET") 'btpd-view-from-dired)))
 
 ;;}}}
 ;;{{{ Setup for w3m
