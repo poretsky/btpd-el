@@ -436,7 +436,7 @@ Accepts number of bytes in the numeric or string representation."
     (widget-insert "  "))
    ((and (string-equal "L" (aref item 6))
          (memq 'leeching btpd-display-info))
-    (widget-insert "Leeching at " (btpd-format-value (aref item 11)) "b/s\n"))
+    (widget-insert "Leeching at " (btpd-format-value (aref item 11)) "B/s\n"))
    ((and (not (string-equal "S" (aref item 6)))
          (memq 'state btpd-display-info))
     (widget-insert "Undetermined state\n")))
