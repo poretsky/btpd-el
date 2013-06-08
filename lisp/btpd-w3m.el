@@ -49,30 +49,21 @@
 ;;}}}
 ;;{{{ Customizations
 
-(defgroup btpd-w3m nil
-  "Cooperation btpd with emacs-w3m."
-  :group 'btpd
-  :group 'w3m)
-
-(defcustom torrent-content-type "application/x-bittorrent"
-  "Bittorrent content type."
-  :type 'string
-  :group 'btpd-w3m)
-
-(defcustom torrent-file-name-pattern "\\.torrent\\'"
-  "Regexp matching bittorrent file name."
-  :type 'regexp
-  :group 'btpd-w3m)
-
 (defcustom btpd-w3m-auto-setup t
   "If not `nil' setup w3m automatically to pass torrents to btpd.
 This is done by adding items to the end of `w3m-content-type-alist'
 if there is no item for the respective content type already."
   :type 'boolean
-  :group 'btpd-w3m)
+  :group 'btpd)
 
 ;;}}}
 ;;{{{ Bittorrent content type viewer function
+
+(defconst btpd-w3m-torrent-content-type "application/x-bittorrent"
+  "Bittorrent content type.")
+
+(defconst btpd-w3m-torrent-file-name-pattern "\\.torrent\\'"
+  "Regexp matching bittorrent file name.")
 
 (defun btpd-w3m-cleanup ()
   "Remove downloaded torrent file after work."
@@ -114,9 +105,12 @@ if there is no item for the respective content type already."
   "Setup emacs-w3m to pass bittorrent URLs to btpd."
   (when (and btpd-w3m-auto-setup
              (boundp 'w3m-content-type-alist)
-             (not (assoc torrent-content-type w3m-content-type-alist)))
+             (not (assoc btpd-w3m-torrent-content-type w3m-content-type-alist)))
     (add-to-list 'w3m-content-type-alist
-                 (list torrent-content-type torrent-file-name-pattern 'btpd-w3m-add-url nil)
+                 (list btpd-w3m-torrent-content-type
+                       btpd-w3m-torrent-file-name-pattern
+                       'btpd-w3m-add-url
+                       nil)
                  'append)
     (add-to-list 'w3m-content-type-alist
                  (list "" "" nil nil)
