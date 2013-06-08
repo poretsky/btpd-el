@@ -1,6 +1,6 @@
 ;;; btpd-w3m.el --- Btpd interface for Emacs-w3m
 ;;; Author: Igor B. Poretsky <poretsky@mlbox.ru>
-;;; Keywords: W3m, Btpd, bittorrent client
+;;; Keywords: W3m, Btpd, BitTorrent client
 
 ;;{{{  Copyright
 
@@ -28,7 +28,7 @@
 
 ;;; Commentary:
 
-;;; This module is part of the Emacs frontend for the Btpd bittorrent
+;;; This module is part of the Emacs frontend for the Btpd BitTorrent
 ;;; client. It provides seamless torrents previewing and downloading
 ;;; facilities for the Emacs-w3m web-browser.
 
@@ -60,10 +60,10 @@ if there is no item for the respective content type already."
 ;;{{{ Bittorrent content type viewer function
 
 (defconst btpd-w3m-torrent-content-type "application/x-bittorrent"
-  "Bittorrent content type.")
+  "BitTorrent content type.")
 
 (defconst btpd-w3m-torrent-file-name-pattern "\\.torrent\\'"
-  "Regexp matching bittorrent file name.")
+  "Regexp matching BitTorrent file name.")
 
 (defun btpd-w3m-cleanup ()
   "Remove downloaded torrent file after work."
@@ -102,7 +102,7 @@ if there is no item for the respective content type already."
 ;;{{{ W3m setup for cooperation with btpd daemon
 
 (defun btpd-w3m-setup ()
-  "Setup emacs-w3m to pass bittorrent URLs to btpd."
+  "Setup emacs-w3m to pass BitTorrent URLs to Btpd."
   (when (and btpd-w3m-auto-setup
              (boundp 'w3m-content-type-alist)
              (not (assoc btpd-w3m-torrent-content-type w3m-content-type-alist)))

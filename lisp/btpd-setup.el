@@ -1,6 +1,6 @@
-;;; btpd-setup.el --- Emacs frontend for the Btpd bittorrent client initial setup
+;;; btpd-setup.el --- Emacs frontend for the Btpd BitTorrent client initial setup
 ;;; Author: Igor B. Poretsky <poretsky@mlbox.ru>
-;;; Keywords: Btpd, bittorrent client
+;;; Keywords: Btpd, BitTorrent client
 
 ;;{{{  Copyright
 

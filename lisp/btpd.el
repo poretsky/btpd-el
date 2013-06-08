@@ -1,6 +1,6 @@
-;;; btpd.el --- Emacs frontend for the Btpd bittorrent client
+;;; btpd.el --- Emacs frontend for the Btpd BitTorrent client
 ;;; Author: Igor B. Poretsky <poretsky@mlbox.ru>
-;;; Keywords: Btpd, bittorrent client
+;;; Keywords: Btpd, BitTorrent client
 
 ;;{{{  Copyright
 
@@ -29,7 +29,7 @@
 ;;; Commentary:
 
 ;;; This module provides more or less intuitive and simple Emacs interface
-;;; for well-known bittorrent client named Btpd. It actually
+;;; for well-known BitTorrent client named Btpd. It actually
 ;;; communicates with running instance of the btpd daemon program
 ;;; via btcli executable in order to do the work.
 
