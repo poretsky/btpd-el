@@ -1,6 +1,6 @@
 ;;; btpd-info.el --- Torrent info extraction utility
 ;;; Author: Igor B. Poretsky <poretsky@mlbox.ru>
-;;; Keywords: Btpd, bittorrent client
+;;; Keywords: Btpd, BitTorrent client
 
 ;;{{{  Copyright
 
@@ -28,7 +28,7 @@
 
 ;;; Commentary:
 
-;;; This module is part of the Emacs frontend for the Btpd bittorrent
+;;; This module is part of the Emacs frontend for the Btpd BitTorrent
 ;;; client. It provides torrent info extraction facility. It utilizes
 ;;; btinfo executable for retrieving data from a torrent file.
 

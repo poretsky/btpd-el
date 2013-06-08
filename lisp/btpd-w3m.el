@@ -1,6 +1,6 @@
 ;;; btpd-w3m.el --- Btpd interface for Emacs-w3m
 ;;; Author: Igor B. Poretsky <poretsky@mlbox.ru>
-;;; Keywords: W3m, Btpd, bittorrent client
+;;; Keywords: W3m, Btpd, BitTorrent client
 
 ;;{{{  Copyright
 
@@ -28,7 +28,7 @@
 
 ;;; Commentary:
 
-;;; This module is part of the Emacs frontend for the Btpd bittorrent
+;;; This module is part of the Emacs frontend for the Btpd BitTorrent
 ;;; client. It provides seamless torrents previewing and downloading
 ;;; facilities for the Emacs-w3m web-browser.
 
@@ -49,30 +49,21 @@
 ;;}}}
 ;;{{{ Customizations
 
-(defgroup btpd-w3m nil
-  "Cooperation btpd with emacs-w3m."
-  :group 'btpd
-  :group 'w3m)
-
-(defcustom torrent-content-type "application/x-bittorrent"
-  "Bittorrent content type."
-  :type 'string
-  :group 'btpd-w3m)
-
-(defcustom torrent-file-name-pattern "\\.torrent\\'"
-  "Regexp matching bittorrent file name."
-  :type 'regexp
-  :group 'btpd-w3m)
-
 (defcustom btpd-w3m-auto-setup t
   "If not `nil' setup w3m automatically to pass torrents to btpd.
 This is done by adding items to the end of `w3m-content-type-alist'
 if there is no item for the respective content type already."
   :type 'boolean
-  :group 'btpd-w3m)
+  :group 'btpd)
 
 ;;}}}
 ;;{{{ Bittorrent content type viewer function
+
+(defconst btpd-w3m-torrent-content-type "application/x-bittorrent"
+  "BitTorrent content type.")
+
+(defconst btpd-w3m-torrent-file-name-pattern "\\.torrent\\'"
+  "Regexp matching BitTorrent file name.")
 
 (defun btpd-w3m-cleanup ()
   "Remove downloaded torrent file after work."
@@ -111,12 +102,15 @@ if there is no item for the respective content type already."
 ;;{{{ W3m setup for cooperation with btpd daemon
 
 (defun btpd-w3m-setup ()
-  "Setup emacs-w3m to pass bittorrent URLs to btpd."
+  "Setup emacs-w3m to pass BitTorrent URLs to Btpd."
   (when (and btpd-w3m-auto-setup
              (boundp 'w3m-content-type-alist)
-             (not (assoc torrent-content-type w3m-content-type-alist)))
+             (not (assoc btpd-w3m-torrent-content-type w3m-content-type-alist)))
     (add-to-list 'w3m-content-type-alist
-                 (list torrent-content-type torrent-file-name-pattern 'btpd-w3m-add-url nil)
+                 (list btpd-w3m-torrent-content-type
+                       btpd-w3m-torrent-file-name-pattern
+                       'btpd-w3m-add-url
+                       nil)
                  'append)
     (add-to-list 'w3m-content-type-alist
                  (list "" "" nil nil)

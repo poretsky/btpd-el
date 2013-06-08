@@ -1,6 +1,6 @@
 ;;; btpd-view.el --- Torrent content viewer for Btpd
 ;;; Author: Igor B. Poretsky <poretsky@mlbox.ru>
-;;; Keywords: Btpd, bittorrent client
+;;; Keywords: Btpd, BitTorrent client
 
 ;;{{{  Copyright
 
@@ -29,7 +29,7 @@
 ;;; Commentary:
 
 ;;; This module is part of the Emacs frontend for the Btpd
-;;; bittorrent client. It provides a convenient way to browse
+;;; BitTorrent client. It provides a convenient way to browse
 ;;; torrent contents just like a virtual directory tree.
 
 ;;; Code:
