@@ -73,7 +73,12 @@
 (defcustom btpd-default-save-folder "."
   "Default folder where downloaded content should be placed.
 You should specify a relative name here. The folder
-will be actually created in the Btpd storage place."
+will be actually created in the Btpd storage place.
+Usually it is `files' subdirectory of the btpd home directory.
+
+On a download start user is asked for the save folder name.
+This option holds a default value that is used when the user
+supplies nothing."
   :type 'string
   :group 'btpd)
 
@@ -82,16 +87,24 @@ will be actually created in the Btpd storage place."
   :type 'directory
   :group 'btpd)
 
-(defcustom btpd-content-erase-enable nil
-  "When a torrent is deleted erase it's content as well.
+(defcustom btpd-torrent-deletion-control '(ask . t)
+  "Whether torrents should be deleted along with their content.
 This option enables to clean torrents content out of the
-Btpd repository, so it requires appropriate permissions.
-On Ubuntu distributions these permissions can usually
-be acquired by including the user into `users' group."
-  :type '(choice (const :tag "Never" nil)
-                 (const :tag "Ask" ask)
-                 (const :tag "Always" t))
+Btpd repository, so it requires appropriate permissions
+that can be acquired via sudo if enabled here."
+  :type '(cons (choice :tag "Try to erase torrents content on deletion"
+                       (const :tag "Never" nil)
+                       (const :tag "Ask" ask)
+                       (const :tag "Always" t))
+               (boolean :tag "Acquire privileges via sudo when necessary"))
   :group 'btpd)
+
+(defun btpd-set-display-option (symbol value)
+  "Intended for use as the `set' function for the customization
+options that affect Btpd control panel appearance."
+  (custom-set-default symbol value)
+  (when (fboundp 'btpd-update-control-panel)
+    (btpd-update-control-panel)))
 
 (defcustom btpd-display-info
   '(size available uploaded state leeching seeding ratio peers)
@@ -104,20 +117,14 @@ be acquired by including the user into `users' group."
               (const :tag "Seeding rate" seeding)
               (const :tag "Ratio" ratio)
               (const :tag "Number of peers" peers))
-  :set (lambda (symbol value)
-         (custom-set-default symbol value)
-         (when (fboundp 'btpd-update-control-panel)
-           (btpd-update-control-panel)))
+  :set 'btpd-set-display-option
   :group 'btpd)
 
 (defcustom btpd-hide-inactive-torrents nil
-  "Hides inactive (stopped) torrents. Be carefull:
+  "Whether inactive (stopped) torrents should be hidden. Be careful:
 The `Delete all' operation will erase hidden torrents as well."
   :type 'boolean
-  :set (lambda (symbol value)
-         (custom-set-default symbol value)
-         (when (fboundp 'btpd-update-control-panel)
-           (btpd-update-control-panel)))
+  :set 'btpd-set-display-option
   :group 'btpd)
 
 ;;}}}
@@ -226,33 +233,45 @@ by a vector of 14 strings filled with following information:
                                                         btpd-home-directory))))
 
 (defun btpd-delete-content (tree base-directory)
-  "Delete torrent content."
-  (dolist (node tree)
-    (unless (string-equal (car node) "..")
-      (let ((item-path (expand-file-name (car node) base-directory)))
-        (if (not (listp (cdr node)))
+  "Delete directory tree content recursively."
+  (let ((fspec
+         (if (or (not (cdr btpd-torrent-deletion-control))
+                 (file-writable-p base-directory))
+             "%s"
+           "/sudo::%s")))
+    (dolist (node tree)
+      (unless (string-equal (car node) "..")
+        (let ((item-path (expand-file-name (car node) base-directory)))
+          (if (not (listp (cdr node)))
+              (condition-case nil
+                  (delete-file (format fspec item-path))
+                (error nil))
+            (btpd-delete-content (cdr node) item-path)
             (condition-case nil
-                (delete-file item-path)
-              (error nil))
-          (btpd-delete-content (cdr node) item-path)
-          (condition-case nil
-              (delete-directory item-path)
-            (error nil)))))))
+                (delete-directory (format fspec item-path))
+              (error nil))))))))
 
 (defun btpd-delete (torrents)
   "Delete torrents from the Btpd control."
-  (if (or (eq btpd-content-erase-enable t)
-          (and btpd-content-erase-enable
+  (if (or (eq (car btpd-torrent-deletion-control) t)
+          (and (car btpd-torrent-deletion-control)
                (y-or-n-p "Erase content as well? ")))
       (dolist (item torrents)
         (let ((tree (aref (btpd-info-extract (btpd-torrent-file (cadr item))) 3))
-              (base-directory (cddr item)))
+              (base-directory (directory-file-name (cddr item))))
           (btpd-command "del" (car item))
           (btpd-delete-content tree base-directory)
-          (unless (string-equal (expand-file-name base-directory btpd-home-directory)
-                                (expand-file-name "files/." btpd-home-directory))
+          (unless (string-equal "files"
+                                (file-relative-name base-directory
+                                                    btpd-home-directory))
             (condition-case nil
-                (delete-directory base-directory)
+                (delete-directory
+                 (format
+                  (if (or (not (cdr btpd-torrent-deletion-control))
+                          (file-writable-p (file-name-directory base-directory)))
+                      "%s"
+                    "/sudo::%s")
+                  base-directory))
               (error nil)))))
     (apply 'btpd-command "del" (mapcar 'car torrents))))
 
