@@ -192,15 +192,19 @@ in the `btpd-view-torrent-info' description."
       (dired-move-to-filename))))
 
 (defun btpd-view-get-size (nodes)
-  "Calculate total size of the listed nodes."
-  (let ((size 0))
+  "Calculate total size of the listed nodes.
+Returns cons cell with total size in car and number of files in cdr."
+  (let ((size 0)
+        (files 0))
     (dolist (item nodes)
       (unless (string-equal (car item) "..")
-        (incf size
-              (if (listp (cdr item))
-                  (btpd-view-get-size (cdr item))
-                (string-to-number (cdr item))))))
-    size))
+        (if (listp (cdr item))
+            (let ((augment (btpd-view-get-size (cdr item))))
+              (incf size (car augment))
+              (incf files (cdr augment)))
+          (incf size (string-to-number (cdr item)))
+          (incf files))))
+    (cons size files)))
 
 (defun btpd-view-validate-buffer ()
   "Ensure that we are in an appropriate buffer."
@@ -266,14 +270,18 @@ that will be inherited by the buffer displaying the content."
 
 (defun btpd-view-size (&optional arg)
   "Calculate total size of all marked (or next ARG) files
-or directories in a torrent view buffer."
+or directories in a torrent view buffer. Parent directory link `..'
+is always ignored even if it is selected."
   (interactive "P")
   (btpd-view-validate-buffer)
-  (let ((emacspeak-speak-messages t))
-    (message "%s"
-             (btpd-format-size
-              (btpd-view-get-size
-               (dired-map-over-marks (btpd-view-get-node) arg))))))
+  (let ((emacspeak-speak-messages t)
+        (amount (btpd-view-get-size (dired-map-over-marks (btpd-view-get-node) arg))))
+    (message "%s in %d file%s"
+             (btpd-format-size (car amount))
+             (cdr amount)
+             (if (= (cdr amount) 1)
+                 ""
+               "s"))))
 
 (defun btpd-view-disabled ()
   "Signal a disabled operation."
