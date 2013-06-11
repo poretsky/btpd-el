@@ -70,7 +70,9 @@ and modified by other functions. It's elements keep the following data:
 
 6. Content availability flag.
 
-7. Torrent hash.")
+7. Torrent hash.
+
+8. Tracker URLs list.")
 (make-variable-buffer-local 'btpd-view-torrent-info)
 
 (defvar btpd-view-keymap (make-sparse-keymap)
@@ -138,8 +140,10 @@ in the `btpd-view-torrent-info' description."
     (erase-buffer)
     (when (fboundp 'remove-overlays)
       (remove-overlays))
-    (insert "  " (aref torrent-info 5) ":\n"
-            "  Total " (aref torrent-info 1) " byte")
+    (insert "  " (aref torrent-info 5) ":\n")
+    (dolist (url (aref torrent-info 8))
+      (insert "  " url "\n"))
+    (insert "  Total " (aref torrent-info 1) " byte")
     (unless (= (string-to-number (aref torrent-info 1)) 1)
       (insert "s"))
     (insert " in " (aref torrent-info 2) " file")

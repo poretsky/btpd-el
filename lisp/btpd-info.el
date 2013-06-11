@@ -64,6 +64,12 @@
 (defconst btpd-info-hash-extractor "^Info hash: \\(.*\\)$"
   "Regexp for hash value extractor.")
 
+(defconst btpd-info-urls-detector "^Tracker URLs: \\[ \\(.*\\) ]$"
+  "Regexp matching Tracker URLs info item.")
+
+(defconst btpd-info-url-extractor "\\[ \\([^ ]+\\) ]"
+  "Regexp for Tracker URL extraction.")
+
 (defun btpd-info-fix-links (tree)
   "Fix links in the directory tree."
   (dolist (node tree)
@@ -76,7 +82,7 @@
 
 (defun btpd-info-extract (file)
   "Extract info from specified torrent file
-and return it as a vector of 8 elements:
+and return it as a vector of 9 elements:
 
 0. Torrent name.
 
@@ -94,12 +100,14 @@ and return it as a vector of 8 elements:
 
 7. Torrent hash.
 
+8. Tracker URLs list.
+
 File list is organized hierarchically. Directories are represented by
 cons cells containing the directory name in car and it's content in cdr.
 Files are represented by cons cells with the name in car and size in cdr.
 File size is expressed in bytes and represented by string.
 All these lists are maintained in the reverse order."
-  (let ((content (make-vector 8 nil)))
+  (let ((content (make-vector 9 nil)))
     (with-temp-buffer
       (unless (zerop (call-process btpd-info-command nil t nil file))
         (error (buffer-string)))
@@ -115,6 +123,14 @@ All these lists are maintained in the reverse order."
       (goto-char (point-min))
       (when (re-search-forward btpd-info-hash-extractor nil t)
         (aset content 7 (match-string-no-properties 1)))
+      (goto-char (point-min))
+      (when (re-search-forward btpd-info-urls-detector nil t)
+        (goto-char (match-beginning 1))
+        (let ((bound (match-end 1))
+              (urls nil))
+          (while (re-search-forward btpd-info-url-extractor bound t)
+            (add-to-list 'urls (match-string-no-properties 1) 'append))
+          (aset content 8 urls)))
       (goto-char (point-min))
       (when (re-search-forward btpd-info-content-list-header nil t)
         (while (re-search-forward btpd-info-file-info-extractor nil t)
