@@ -1,4 +1,4 @@
-;;; btpd-w3m.el --- Btpd interface for Emacs-w3m
+;;; btpd-w3m.el --- Btpd bindings for Emacs-w3m
 ;;; Author: Igor B. Poretsky <poretsky@mlbox.ru>
 ;;; Keywords: W3m, Btpd, BitTorrent client
 
