@@ -532,13 +532,15 @@ Accepts number of bytes in the numeric or string representation."
 The second argument is optional. If not `nil' it specifies
 a hook function to use at the buffer killing."
   (interactive "fTorrent file: ")
-  (let* ((torrent-info (btpd-info-extract torrent-file))
+  (let* ((torrent-info (btpd-info-extract (expand-file-name torrent-file)))
          (panel (generate-new-buffer btpd-new-torrent-confirmation-dialog)))
     (with-current-buffer panel
       (kill-all-local-variables)
       (when cleanup-function
         (add-hook 'kill-buffer-hook cleanup-function nil t))
-      (btpd-initialize-new-torrent-confirmation (aref torrent-info 0) torrent-file (aref torrent-info 7)))
+      (btpd-initialize-new-torrent-confirmation (aref torrent-info 0)
+                                                (aref torrent-info 5)
+                                                (aref torrent-info 7)))
     (switch-to-buffer panel)))
 
 (defun btpd-add-from-dired ()
