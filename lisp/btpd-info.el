@@ -64,6 +64,16 @@
 (defconst btpd-info-hash-extractor "^Info hash: \\(.*\\)$"
   "Regexp for hash value extractor.")
 
+(defun btpd-info-fix-links (tree)
+  "Fix links in the directory tree."
+  (dolist (node tree)
+    (when (and (listp (cdr node))
+               (not (string-equal (car node) "..")))
+      (let ((backlink (assoc ".." (cdr node))))
+        (when backlink
+          (setcdr backlink tree)))
+      (btpd-info-fix-links (cdr node)))))
+
 (defun btpd-info-extract (file)
   "Extract info from specified torrent file
 and return it as a vector of 8 elements:
@@ -128,6 +138,7 @@ All these lists are maintained in the reverse order."
             (while (setq fn (assoc ".." tree))
               (setq tree (cdr fn)))
             (aset content 3 tree)))))
+    (btpd-info-fix-links (aref content 3))
     (aset content 4 (file-attributes file 'string))
     (aset content 5 (expand-file-name file))
     content))
