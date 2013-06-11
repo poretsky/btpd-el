@@ -240,13 +240,17 @@ that will be inherited by the buffer displaying the content."
   (interactive)
   (btpd-view-validate-buffer)
   (let ((node (btpd-view-get-node)))
-    (if (not (and node (listp (cdr node))))
-        (call-interactively 'dired-view-file)
-      (aset btpd-view-torrent-info 3 (cdr node))
-      (aset btpd-view-torrent-info 5
-            (expand-file-name (car node)
-                              (aref btpd-view-torrent-info 5)))
-      (btpd-view-buffer-setup btpd-view-torrent-info))))
+    (if (and node (listp (cdr node)))
+        (let ((position (and (string-equal (car node) "..")
+                             (aref btpd-view-torrent-info 5))))
+          (aset btpd-view-torrent-info 3 (cdr node))
+          (aset btpd-view-torrent-info 5
+                (expand-file-name (car node)
+                                  (aref btpd-view-torrent-info 5)))
+          (btpd-view-buffer-setup btpd-view-torrent-info)
+          (when position
+            (dired-goto-file position)))
+      (call-interactively 'dired-view-file))))
 
 (defun btpd-view-from-dired ()
   "Preview torrent content from a file in dired."
