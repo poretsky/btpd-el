@@ -1,3 +1,17 @@
+btpd-el (1.4) unstable; urgency=low
+
+  * More consistent keymap in the torrent view.
+  * Implemented size calculation for selected items in the torrent view.
+  * Fixed virtual directory structure construction.
+  * After returning from a subdirectory in torrent view position is
+    correctly restored.
+  * Tracker URLs are included in torrent info.
+  * Fixed interactive torrent adding.
+  * Added keystroke to close a control panel.
+  * More extensive description in README.Debian.
+
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Wed, 12 Jun 2013 10:50:24 +0400
+
 btpd-el (1.3) unstable; urgency=low
 
   * Implemented privileges acquisition via sudo when it is necessary for
