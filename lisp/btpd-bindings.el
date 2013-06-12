@@ -1,4 +1,4 @@
-;;; btpd-setup.el --- Emacs frontend for the Btpd BitTorrent client initial setup
+;;; btpd-bindings.el --- General bindings for btpd-el package
 ;;; Author: Igor B. Poretsky <poretsky@mlbox.ru>
 ;;; Keywords: Btpd, BitTorrent client
 
@@ -35,7 +35,7 @@
 ;;; Code:
 
 ;;}}}
-;;{{{ Requirements
+;;{{{ Autoload interactive commands
 
 (autoload 'btpd "btpd" "Btpd BitTorrent client" t)
 (autoload 'btpd-add "btpd" "Add torrent file to btpd interactively." t)
@@ -44,12 +44,12 @@
 (autoload 'btpd-view-from-dired "btpd-view" "Preview torrent content from a file in dired." t)
 
 ;;}}}
-;;{{{ Setup for main menu
+;;{{{ Add item to the main menu
 
 (define-key global-map [menu-bar btpd] '("Btpd" . btpd))
 
 ;;}}}
-;;{{{ Setup for dired
+;;{{{ Bindings for dired
 
 (eval-after-load "dired"
   '(progn
@@ -57,12 +57,12 @@
      (define-key dired-mode-map (kbd "M-RET") 'btpd-view-from-dired)))
 
 ;;}}}
-;;{{{ Setup for w3m
+;;{{{ Bindings for w3m
 
 (eval-after-load 'w3m '(require 'btpd-w3m nil t))
 
 ;;}}}
 
-(provide 'btpd-setup)
+(provide 'btpd-bindings)
 
-;;; btpd-setup.el ends here
+;;; btpd-bindings.el ends here

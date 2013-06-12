@@ -58,9 +58,8 @@
 (require 'custom)
 (require 'widget)
 (require 'dired)
-
-(autoload 'btpd-view "btpd-view" "View torrent content in virtual dired buffer.")
-(autoload 'btpd-info-extract "btpd-info" "Extract info from specified torrent file")
+(require 'btpd-utils)
+(require 'btpd-bindings)
 
 ;;}}}
 ;;{{{ Customizations
@@ -310,7 +309,7 @@ Navigate around and press buttons.
 
 (defun btpd-close-panel (&rest ignore)
   "Close button reaction."
-  (kill-buffer))
+  (quit-window t))
 
 (defun btpd-create-button (label action target panel panel-arg &optional unsafe)
   "General button creation helper."
@@ -394,35 +393,6 @@ Navigate around and press buttons.
                                         (widget-get handle ':content-path)
                                         (widget-get handle ':tag)))
                    name)))
-
-(defconst btpd-value-format-units
-  (list (cons (* 1024 1024 1024) "G")
-        (cons (* 1024 1024) "M")
-        (cons 1024 "k"))
-  "Associated list of unit factors and associated signs.")
-
-(defun btpd-format-value (value)
-  "Transform a numeric value into convenient string representation.
-Accepts string representation of a source value as well."
-  (let ((src (or (and (stringp value) (string-to-number value)) value))
-        (units btpd-value-format-units))
-    (while (and units (< src (caar units)))
-      (setq units (cdr units)))
-    (if units
-        (format (concat "%.2f" (cdar units)) (/ (float src) (caar units)))
-      (format "%d" src))))
-
-(defun btpd-format-size (value)
-  "Generate conventional size representation string.
-Accepts number of bytes in the numeric or string representation."
-  (let ((bytes (or (and (stringp value) (string-to-number value)) value)))
-    (if (< bytes 1024)
-        (if (= bytes 1)
-            "1 byte"
-          (format "%d bytes" bytes))
-      (if (stringp value)
-          (format "%s (%s bytes)" (btpd-format-value bytes) value)
-        (format "%s (%d bytes)" (btpd-format-value bytes) value)))))
 
 (defun btpd-display-torrent (item panel &optional panel-arg)
   "Arrange a torrent item control section on a control panel."
@@ -527,30 +497,6 @@ Accepts number of bytes in the numeric or string representation."
    (aref btpd-new-torrent 1)
    (aref btpd-new-torrent 2)))
 
-(defun btpd-add (torrent-file &optional cleanup-function)
-  "Interactively add new torrent from specified file.
-The second argument is optional. If not `nil' it specifies
-a hook function to use at the buffer killing."
-  (interactive "fTorrent file: ")
-  (let* ((torrent-info (btpd-info-extract torrent-file))
-         (panel (generate-new-buffer btpd-new-torrent-confirmation-dialog)))
-    (with-current-buffer panel
-      (kill-all-local-variables)
-      (when cleanup-function
-        (add-hook 'kill-buffer-hook cleanup-function nil t))
-      (btpd-initialize-new-torrent-confirmation (aref torrent-info 0) torrent-file (aref torrent-info 7)))
-    (switch-to-buffer panel)))
-
-(defun btpd-add-from-dired ()
-  "Add torrent from a file in dired."
-  (interactive)
-  (let ((file (dired-get-filename 'verbatim t)))
-    (if file
-        (if (file-regular-p file)
-            (btpd-add file)
-          (error "Not a regular file"))
-      (error "No file on this line"))))
-
 ;;}}}
 ;;{{{ Main control panel
 
@@ -603,7 +549,7 @@ a hook function to use at the buffer killing."
                          (string-equal (aref item 1) current-item)))
             (setq position (point)))
           (btpd-display-torrent item 'btpd-refresh-panel item-count)
-          (setq item-count (1+ item-count)))
+          (incf item-count))
         (push (cons (aref item 0) (cons (aref item 1) (aref item 3))) all)
         (cond
          ((string-match "[LS]" (aref item 6))
@@ -637,6 +583,9 @@ a hook function to use at the buffer killing."
       (dolist (window (get-buffer-window-list))
         (set-window-point window (point))))))
 
+;;}}}
+;;{{{ Interactive commands
+
 (defun btpd ()
   "Pop up Btpd control panel."
   (interactive)
@@ -644,6 +593,52 @@ a hook function to use at the buffer killing."
     (kill-all-local-variables)
     (btpd-refresh-panel))
   (switch-to-buffer btpd-control-panel))
+
+(defun btpd-add (torrent-file &optional cleanup-function)
+  "Interactively add new torrent from specified file.
+The second argument is optional. If not `nil' it specifies
+a hook function to use at the buffer killing."
+  (interactive "fTorrent file: ")
+  (let* ((torrent-info (btpd-info-extract (expand-file-name torrent-file)))
+         (panel (generate-new-buffer btpd-new-torrent-confirmation-dialog)))
+    (with-current-buffer panel
+      (kill-all-local-variables)
+      (when cleanup-function
+        (add-hook 'kill-buffer-hook cleanup-function nil t))
+      (btpd-initialize-new-torrent-confirmation (aref torrent-info 0)
+                                                (aref torrent-info 5)
+                                                (aref torrent-info 7)))
+    (switch-to-buffer panel)))
+
+(defun btpd-add-from-dired ()
+  "Add torrent from a file in dired."
+  (interactive)
+  (let ((file (dired-get-filename 'verbatim t)))
+    (if file
+        (if (file-regular-p file)
+            (btpd-add file)
+          (error "Not a regular file"))
+      (error "No file on this line")))
+  (when (and (interactive-p)
+             (featurep 'emacspeak))
+    (emacspeak-auditory-icon 'open-object)
+    (emacspeak-speak-line)))
+
+(defun btpd-quit ()
+  "Close Btpd control panel."
+  (interactive)
+  (unless (eq major-mode 'btpd-control-mode)
+    (error "Not in Btpd control panel"))
+  (btpd-close-panel)
+  (when (and (interactive-p)
+             (featurep 'emacspeak))
+    (emacspeak-auditory-icon 'close-object)
+    (emacspeak-speak-mode-line)))
+
+;;}}}
+;;{{{ Key definitions
+
+(define-key btpd-control-mode-map (kbd "q") 'btpd-quit)
 
 ;;}}}
 

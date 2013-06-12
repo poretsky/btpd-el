@@ -21,4 +21,4 @@
     (if (fboundp 'debian-pkg-add-load-path-item)
         (debian-pkg-add-load-path-item package-dir)
       (add-to-list 'load-path package-dir))
-    (require 'btpd-setup nil t)))
+    (require 'btpd-bindings nil t)))

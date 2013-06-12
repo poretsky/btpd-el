@@ -41,8 +41,8 @@
   (require 'cl))
 (require 'dired)
 (require 'dired-x)
-
-(autoload 'btpd-info-extract "btpd-info" "Extract info from specified torrent file")
+(require 'btpd-utils)
+(require 'btpd-bindings)
 
 ;;}}}
 ;;{{{ Displaying torrent content as virtual directory tree
@@ -69,7 +69,9 @@ and modified by other functions. It's elements keep the following data:
 
 6. Content availability flag.
 
-7. Torrent hash.")
+7. Torrent hash.
+
+8. Tracker URLs list.")
 (make-variable-buffer-local 'btpd-view-torrent-info)
 
 (defvar btpd-view-keymap (make-sparse-keymap)
@@ -104,7 +106,7 @@ in the `btpd-view-torrent-info' description."
                     (dolist (child (cdr node))
                       (when (and (listp (cdr child))
                                  (not (string-equal (car child) "..")))
-                        (setq count (1+ count)))))
+                        (incf count))))
                   count))
         (setcar (nthcdr 8 attributes)
                 (if (listp (cdr node))
@@ -137,11 +139,11 @@ in the `btpd-view-torrent-info' description."
     (erase-buffer)
     (when (fboundp 'remove-overlays)
       (remove-overlays))
-    (insert "  " (aref torrent-info 5) ":\n"
-            "  Total " (aref torrent-info 1) " byte")
-    (unless (= (string-to-number (aref torrent-info 1)) 1)
-      (insert "s"))
-    (insert " in " (aref torrent-info 2) " file")
+    (insert "  " (aref torrent-info 5) ":\n")
+    (dolist (url (aref torrent-info 8))
+      (insert "  " url "\n"))
+    (insert "  Total " (btpd-format-size (aref torrent-info 1))
+            " in " (aref torrent-info 2) " file")
     (unless (= (string-to-number (aref torrent-info 2)) 1)
       (insert "s"))
     (insert "\n")
@@ -171,6 +173,9 @@ in the `btpd-view-torrent-info' description."
   (setq btpd-view-torrent-info torrent-info)
   (set (make-local-variable 'revert-buffer-function) 'btpd-view-revert))
 
+;;}}}
+;;{{{ Utility functions
+
 (defun btpd-view-revert (&rest ignore)
   "The revert buffer function for the torrent view buffers."
   (let ((opoint (point))
@@ -182,6 +187,40 @@ in the `btpd-view-torrent-info' description."
       (or (and ofile (dired-goto-file ofile))
           (goto-char opoint))
       (dired-move-to-filename))))
+
+(defun btpd-view-get-size (nodes)
+  "Calculate total size of the listed nodes.
+Returns cons cell with total size in car and number of files in cdr."
+  (let ((size 0)
+        (files 0))
+    (dolist (item nodes)
+      (unless (string-equal (car item) "..")
+        (if (listp (cdr item))
+            (let ((augment (btpd-view-get-size (cdr item))))
+              (incf size (car augment))
+              (incf files (cdr augment)))
+          (incf size (string-to-number (cdr item)))
+          (incf files))))
+    (cons size files)))
+
+(defun btpd-view-validate-buffer ()
+  "Ensure that we are in an appropriate buffer."
+  (unless btpd-view-torrent-info
+    (error "Not in a torrent view buffer")))
+
+(defun btpd-view-get-filename ()
+  "Get file name at point."
+  (let ((filename (dired-get-filename 'verbatim t)))
+    (unless filename
+      (error "No file on this line"))
+    filename))
+
+(defun btpd-view-get-node ()
+  "Get node at point or `nil' if none."
+  (assoc (btpd-view-get-filename) (aref btpd-view-torrent-info 3)))
+
+;;}}}
+;;{{{ Interactive commands
 
 (defun btpd-view (torrent-file &optional base-dir name)
   "View torrent content in virtual dired buffer.
@@ -204,33 +243,77 @@ that will be inherited by the buffer displaying the content."
 (defun btpd-view-visit-item ()
   "Visit file or directory at point."
   (interactive)
-  (let ((filename (dired-get-filename 'verbatim t)))
-    (if filename
-        (let ((item (assoc filename (aref btpd-view-torrent-info 3))))
-          (if (not (listp (cdr item)))
-              (dired-find-file)
-            (aset btpd-view-torrent-info 3 (cdr item))
-            (aset btpd-view-torrent-info 5
-                  (expand-file-name filename (aref btpd-view-torrent-info 5)))
-            (btpd-view-buffer-setup btpd-view-torrent-info)))
-      (error "No file on this line"))))
+  (btpd-view-validate-buffer)
+  (let ((node (btpd-view-get-node)))
+    (if (and node (listp (cdr node)))
+        (let ((position (and (string-equal (car node) "..")
+                             (aref btpd-view-torrent-info 5))))
+          (aset btpd-view-torrent-info 3 (cdr node))
+          (aset btpd-view-torrent-info 5
+                (expand-file-name (car node)
+                                  (aref btpd-view-torrent-info 5)))
+          (btpd-view-buffer-setup btpd-view-torrent-info)
+          (when position
+            (dired-goto-file position)))
+      (call-interactively 'dired-view-file))))
 
 (defun btpd-view-from-dired ()
   "Preview torrent content from a file in dired."
   (interactive)
-  (let ((file (dired-get-filename 'verbatim t)))
-    (if (and file
-             (file-regular-p file))
+  (let ((file (btpd-view-get-filename)))
+    (if (file-regular-p file)
         (btpd-view file)
-      (error "No file on this line"))))
+      (error "Not a regular file"))))
+
+(defun btpd-view-size (&optional arg)
+  "Calculate total size of all marked (or next ARG) files
+or directories in a torrent view buffer. Parent directory link `..'
+is always ignored even if it is selected."
+  (interactive "P")
+  (btpd-view-validate-buffer)
+  (let ((emacspeak-speak-messages t)
+        (amount (btpd-view-get-size (dired-map-over-marks (btpd-view-get-node) arg))))
+    (message "%s in %d file%s"
+             (btpd-format-size (car amount))
+             (cdr amount)
+             (if (= (cdr amount) 1)
+                 ""
+               "s"))))
+
+(defun btpd-view-disabled ()
+  "Signal a disabled operation."
+  (interactive)
+  (error "The operation is not available here"))
 
 ;;}}}
 ;;{{{ Key definitions
 
-(define-key btpd-view-keymap (kbd "RET") 'btpd-view-visit-item)
-(define-key btpd-view-keymap [remap dired-flag-file-deletion] 'undefined)
-(define-key btpd-view-keymap [remap dired-do-flagged-delete] 'undefined)
-(define-key btpd-view-keymap [remap dired-do-delete] 'undefined)
+(define-key btpd-view-keymap (kbd "z") 'btpd-view-size)
+
+(loop for op in
+      '(dired-advertised-find-file
+        dired-find-file
+        dired-view-file)
+      do
+      (eval
+       `(define-key btpd-view-keymap [remap ,op] 'btpd-view-visit-item)))
+
+(loop for op in
+      '(dired-flag-file-deletion
+        dired-do-flagged-delete
+        dired-do-delete
+        dired-do-chgrp
+        dired-do-chmod
+        dired-do-chown
+        dired-do-rename
+        dired-do-rename-regexp
+        dired-do-touch
+        dired-do-compress
+        dired-sort-toggle-or-edit
+        wdired-change-to-wdired-mode)
+      do
+      (eval
+       `(define-key btpd-view-keymap [remap ,op] 'btpd-view-disabled)))
 
 ;;}}}
 
