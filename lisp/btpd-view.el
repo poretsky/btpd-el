@@ -42,6 +42,7 @@
 (require 'dired)
 (require 'dired-x)
 (require 'btpd-utils)
+(require 'btpd-bindings)
 
 ;;}}}
 ;;{{{ Displaying torrent content as virtual directory tree

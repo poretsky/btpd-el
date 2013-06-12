@@ -59,6 +59,7 @@
 (require 'widget)
 (require 'dired)
 (require 'btpd-utils)
+(require 'btpd-bindings)
 
 ;;}}}
 ;;{{{ Customizations

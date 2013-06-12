@@ -43,6 +43,7 @@
 (require 'custom)
 (eval-when (load)
   (require 'w3m))
+(require 'btpd-bindings)
 
 ;;}}}
 ;;{{{ Customizations
