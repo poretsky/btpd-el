@@ -143,10 +143,8 @@ in the `btpd-view-torrent-info' description."
     (insert "  " (aref torrent-info 5) ":\n")
     (dolist (url (aref torrent-info 8))
       (insert "  " url "\n"))
-    (insert "  Total " (aref torrent-info 1) " byte")
-    (unless (= (string-to-number (aref torrent-info 1)) 1)
-      (insert "s"))
-    (insert " in " (aref torrent-info 2) " file")
+    (insert "  Total " (btpd-format-size (aref torrent-info 1))
+            " in " (aref torrent-info 2) " file")
     (unless (= (string-to-number (aref torrent-info 2)) 1)
       (insert "s"))
     (insert "\n")
@@ -286,7 +284,7 @@ is always ignored even if it is selected."
 (defun btpd-view-disabled ()
   "Signal a disabled operation."
   (interactive)
-  (error "The operation is not permitted here"))
+  (error "The operation is not available here"))
 
 ;;}}}
 ;;{{{ Key definitions
@@ -312,6 +310,7 @@ is always ignored even if it is selected."
         dired-do-rename-regexp
         dired-do-touch
         dired-do-compress
+        dired-sort-toggle-or-edit
         wdired-change-to-wdired-mode)
       do
       (eval
