@@ -58,9 +58,7 @@
 (require 'custom)
 (require 'widget)
 (require 'dired)
-
-(autoload 'btpd-view "btpd-view" "View torrent content in virtual dired buffer.")
-(autoload 'btpd-info-extract "btpd-info" "Extract info from specified torrent file")
+(require 'btpd-utils)
 
 ;;}}}
 ;;{{{ Customizations
@@ -395,35 +393,6 @@ Navigate around and press buttons.
                                         (widget-get handle ':tag)))
                    name)))
 
-(defconst btpd-value-format-units
-  (list (cons (* 1024 1024 1024) "G")
-        (cons (* 1024 1024) "M")
-        (cons 1024 "k"))
-  "Associated list of unit factors and associated signs.")
-
-(defun btpd-format-value (value)
-  "Transform a numeric value into convenient string representation.
-Accepts string representation of a source value as well."
-  (let ((src (or (and (stringp value) (string-to-number value)) value))
-        (units btpd-value-format-units))
-    (while (and units (< src (caar units)))
-      (setq units (cdr units)))
-    (if units
-        (format (concat "%.2f" (cdar units)) (/ (float src) (caar units)))
-      (format "%d" src))))
-
-(defun btpd-format-size (value)
-  "Generate conventional size representation string.
-Accepts number of bytes in the numeric or string representation."
-  (let ((bytes (or (and (stringp value) (string-to-number value)) value)))
-    (if (< bytes 1024)
-        (if (= bytes 1)
-            "1 byte"
-          (format "%d bytes" bytes))
-      (if (stringp value)
-          (format "%s (%s bytes)" (btpd-format-value bytes) value)
-        (format "%s (%d bytes)" (btpd-format-value bytes) value)))))
-
 (defun btpd-display-torrent (item panel &optional panel-arg)
   "Arrange a torrent item control section on a control panel."
   (widget-insert "\n")
@@ -579,7 +548,7 @@ Accepts number of bytes in the numeric or string representation."
                          (string-equal (aref item 1) current-item)))
             (setq position (point)))
           (btpd-display-torrent item 'btpd-refresh-panel item-count)
-          (setq item-count (1+ item-count)))
+          (incf item-count))
         (push (cons (aref item 0) (cons (aref item 1) (aref item 3))) all)
         (cond
          ((string-match "[LS]" (aref item 6))

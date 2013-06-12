@@ -1,4 +1,4 @@
-;;; btpd-info.el --- Torrent info extraction utility
+;;; btpd-utils.el --- Common utility functions for btpd-el package
 ;;; Author: Igor B. Poretsky <poretsky@mlbox.ru>
 ;;; Keywords: Btpd, BitTorrent client
 
@@ -29,8 +29,9 @@
 ;;; Commentary:
 
 ;;; This module is part of the Emacs frontend for the Btpd BitTorrent
-;;; client. It provides torrent info extraction facility. It utilizes
-;;; btinfo executable for retrieving data from a torrent file.
+;;; client. It is required by other modules to provide some commonly
+;;; used functionality. The btinfo executable is utilized
+;;; for retrieving data from a torrent file.
 
 ;;; Code:
 
@@ -160,7 +161,39 @@ All these lists are maintained in the reverse order."
     content))
 
 ;;}}}
+;;{{{ Formatting values for display
 
-(provide 'btpd-info)
+(defconst btpd-value-format-units
+  (list (cons (* 1024 1024 1024) "G")
+        (cons (* 1024 1024) "M")
+        (cons 1024 "k"))
+  "Associated list of unit factors and respective signs.")
 
-;;; btpd-info.el ends here
+(defun btpd-format-value (value)
+  "Transform a numeric value into convenient string representation.
+Accepts string representation of a source value as well."
+  (let ((src (or (and (stringp value) (string-to-number value)) value))
+        (units btpd-value-format-units))
+    (while (and units (< src (caar units)))
+      (setq units (cdr units)))
+    (if units
+        (format (concat "%.2f" (cdar units)) (/ (float src) (caar units)))
+      (format "%d" src))))
+
+(defun btpd-format-size (value)
+  "Generate conventional size representation string.
+Accepts number of bytes in the numeric or string representation."
+  (let ((bytes (or (and (stringp value) (string-to-number value)) value)))
+    (if (< bytes 1024)
+        (if (= bytes 1)
+            "1 byte"
+          (format "%d bytes" bytes))
+      (if (stringp value)
+          (format "%s (%s bytes)" (btpd-format-value bytes) value)
+        (format "%s (%d bytes)" (btpd-format-value bytes) value)))))
+
+;;}}}
+
+(provide 'btpd-utils)
+
+;;; btpd-utils.el ends here

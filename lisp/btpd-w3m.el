@@ -44,8 +44,6 @@
 (eval-when (load)
   (require 'w3m))
 
-(autoload 'btpd-add "btpd" "Interactively add new torrent from specified file." t)
-
 ;;}}}
 ;;{{{ Customizations
 

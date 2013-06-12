@@ -41,9 +41,7 @@
   (require 'cl))
 (require 'dired)
 (require 'dired-x)
-
-(autoload 'btpd-format-size "btpd" "Generate conventional size representation string.")
-(autoload 'btpd-info-extract "btpd-info" "Extract info from specified torrent file")
+(require 'btpd-utils)
 
 ;;}}}
 ;;{{{ Displaying torrent content as virtual directory tree
