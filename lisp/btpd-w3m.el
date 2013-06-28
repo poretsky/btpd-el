@@ -38,11 +38,9 @@
 ;;{{{ Requirements
 
 (eval-when-compile
-  (require 'cl)
-  (require 'w3m nil t))
+  (require 'cl))
 (require 'custom)
-(eval-when (load)
-  (require 'w3m))
+(require 'w3m)
 (require 'btpd-bindings)
 
 ;;}}}
