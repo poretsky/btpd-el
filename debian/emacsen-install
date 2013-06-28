@@ -21,10 +21,12 @@ ELCDIR=/usr/share/${FLAVOR}/site-lisp/${PACKAGE}
 
 install -m 755 -d ${ELCDIR}
 cd ${ELDIR}
-src=`echo *.el`
+files=`echo *.el`
 cd ${ELCDIR}
-for file in $src
-do ln -s ../../../emacs/site-lisp/${PACKAGE}/$file
+src=
+for file in $files; do
+    ln -s ../../../emacs/site-lisp/${PACKAGE}/$file
+    [ "$file" != "btpd-w3m.el" ] && src="$src $file"
 done
 
 cat << EOF > path.el

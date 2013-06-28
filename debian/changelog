@@ -1,8 +1,16 @@
-btpd-el (1.4precise1) precise; urgency=low
+btpd-el (1.5precise1) precise; urgency=low
 
   * Per distribution build.
 
- -- Igor B. Poretsky <poretsky@mlbox.ru>  Wed, 12 Jun 2013 11:08:14 +0400
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Fri, 28 Jun 2013 15:28:48 +0400
+
+btpd-el (1.5) unstable; urgency=low
+
+  * The btpd-w3m module is left uncompiled to avoid dependency on the
+    w3m package.
+  * More appropriate dependencies.
+
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Fri, 28 Jun 2013 15:22:57 +0400
 
 btpd-el (1.4) unstable; urgency=low
 

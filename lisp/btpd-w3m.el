@@ -38,11 +38,9 @@
 ;;{{{ Requirements
 
 (eval-when-compile
-  (require 'cl)
-  (require 'w3m nil t))
+  (require 'cl))
 (require 'custom)
-(eval-when (load)
-  (require 'w3m))
+(require 'w3m)
 (require 'btpd-bindings)
 
 ;;}}}
@@ -63,15 +61,6 @@ if there is no item for the respective content type already."
 
 (defconst btpd-w3m-torrent-file-name-pattern "\\.torrent\\'"
   "Regexp matching BitTorrent file name.")
-
-(defun btpd-w3m-cleanup ()
-  "Remove downloaded torrent file after work."
-  (when (and (boundp 'btpd-new-torrent)
-             (vectorp btpd-new-torrent)
-             (= (length btpd-new-torrent) 3)
-             (stringp (aref btpd-new-torrent 1)))
-    (cd "~")
-    (delete-directory (file-name-directory (aref btpd-new-torrent 1)) t)))
 
 (defun btpd-w3m-add-url (url &rest ignore)
   "Add URL to btpd."
@@ -95,7 +84,14 @@ if there is no item for the respective content type already."
             (when (zerop (call-process "gzip" nil nil nil "-t" file))
               (rename-file file (format "%s.gz" file))
               (call-process "gzip" nil nil nil (format "%s.gz" file)))
-            (btpd-add file 'btpd-w3m-cleanup)))))))
+            (btpd-add file
+                      (lambda ()
+                        (when (and (boundp 'btpd-new-torrent)
+                                   (vectorp btpd-new-torrent)
+                                   (= (length btpd-new-torrent) 3)
+                                   (stringp (aref btpd-new-torrent 1)))
+                          (cd "~")
+                          (delete-directory (file-name-directory (aref btpd-new-torrent 1)) t))))))))))
 
 ;;}}}
 ;;{{{ W3m setup for cooperation with btpd daemon
