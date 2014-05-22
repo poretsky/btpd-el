@@ -83,7 +83,7 @@ if there is no item for the respective content type already."
                 (w3m-refontify-anchor)))
             (when (zerop (call-process "gzip" nil nil nil "-t" file))
               (rename-file file (format "%s.gz" file))
-              (call-process "gzip" nil nil nil (format "%s.gz" file)))
+              (call-process "gzip" nil nil nil "-d" (format "%s.gz" file)))
             (btpd-add file
                       (lambda ()
                         (when (and (boundp 'btpd-new-torrent)
