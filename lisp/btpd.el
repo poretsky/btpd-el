@@ -277,17 +277,21 @@ by a vector of 14 strings filled with following information:
 ;;}}}
 ;;{{{ Major mode definition
 
-(defvar btpd-control-mode-map (make-sparse-keymap)
+(defvar btpd-control-mode-map
+  (let ((map (make-sparse-keymap)))
+    (suppress-keymap map)
+    (set-keymap-parent map widget-keymap)
+    (define-key map "q" 'btpd-quit)
+    map)
   "Keymap for Btpd control panel.")
 
-(set-keymap-parent btpd-control-mode-map widget-keymap)
-
-(define-derived-mode btpd-control-mode fundamental-mode
+(define-derived-mode btpd-control-mode nil
   "Control panel"
   "This is a Btpd control panel.
 Navigate around and press buttons.
 
-\\{btpd-control-mode-map}")
+\\{btpd-control-mode-map}"
+  (setq buffer-read-only t))
 
 ;;}}}
 ;;{{{ Common widgets
@@ -458,9 +462,9 @@ Navigate around and press buttons.
 
 (defun btpd-initialize-new-torrent-confirmation (name file hash)
   "Fill Btpd new torrent confirmation panel with the actual content."
-  (let ((duplicate (btpd-search hash (btpd-get-info))))
-    (let ((inhibit-read-only t))
-      (erase-buffer))
+  (let ((duplicate (btpd-search hash (btpd-get-info)))
+        (inhibit-read-only t))
+    (erase-buffer)
     (when (fboundp 'remove-overlays)
       (remove-overlays))
     (btpd-control-mode)
@@ -485,8 +489,8 @@ Navigate around and press buttons.
                               (btpd-refresh-new-torrent-confirmation)))
       (widget-insert "\n")
       (btpd-create-refresh-button 'btpd-refresh-new-torrent-confirmation)
-      (widget-insert "\n")))
-  (widget-setup)
+      (widget-insert "\n"))
+    (widget-setup))
   (goto-char (point-min))
   (widget-forward 2))
 
@@ -521,59 +525,59 @@ Navigate around and press buttons.
 (defun btpd-refresh-panel (&optional current-item)
   "Refresh Btpd control panel and go to specified current item if any."
   (let ((inhibit-read-only t))
-    (erase-buffer))
-  (when (fboundp 'remove-overlays)
-    (remove-overlays))
-  (btpd-control-mode)
-  (widget-insert "Btpd control panel\n\n")
-  (btpd-create-add-new-button)
-  (widget-insert "  ")
-  (btpd-create-close-button "Close" "Close control panel")
-  (widget-insert "  ")
-  (btpd-create-customize-button)
-  (widget-insert "\n")
-  (let ((torrents (btpd-get-info))
-        (active nil)
-        (inactive nil)
-        (all nil)
-        (position nil)
-        (item-count 0))
-    (when torrents
-      (widget-insert "\nTorrents under control:\n")
-      (dolist (item torrents)
-        (unless (and btpd-hide-inactive-torrents
-                     (string-match "[-I]" (aref item 6)))
-          (when (or (and (integerp current-item)
-                         (= item-count current-item))
-                    (and (stringp current-item)
-                         (string-equal (aref item 1) current-item)))
-            (setq position (point)))
-          (btpd-display-torrent item 'btpd-refresh-panel item-count)
-          (incf item-count))
-        (push (cons (aref item 0) (cons (aref item 1) (aref item 3))) all)
-        (cond
-         ((string-match "[LS]" (aref item 6))
-          (setq active t))
-         ((string-match "I" (aref item 6))
-          (setq inactive t))))
-      (when btpd-hide-inactive-torrents
-        (widget-insert (format "\nShown %d/%d\n" item-count (length all))
-                       "Inactive torrents are hidden\n"))
+    (erase-buffer)
+    (when (fboundp 'remove-overlays)
+      (remove-overlays))
+    (btpd-control-mode)
+    (widget-insert "Btpd control panel\n\n")
+    (btpd-create-add-new-button)
+    (widget-insert "  ")
+    (btpd-create-close-button "Close" "Close control panel")
+    (widget-insert "  ")
+    (btpd-create-customize-button)
+    (widget-insert "\n")
+    (let ((torrents (btpd-get-info))
+          (active nil)
+          (inactive nil)
+          (all nil)
+          (position nil)
+          (item-count 0))
+      (when torrents
+        (widget-insert "\nTorrents under control:\n")
+        (dolist (item torrents)
+          (unless (and btpd-hide-inactive-torrents
+                       (string-match "[-I]" (aref item 6)))
+            (when (or (and (integerp current-item)
+                           (= item-count current-item))
+                      (and (stringp current-item)
+                           (string-equal (aref item 1) current-item)))
+              (setq position (point)))
+            (btpd-display-torrent item 'btpd-refresh-panel item-count)
+            (incf item-count))
+          (push (cons (aref item 0) (cons (aref item 1) (aref item 3))) all)
+          (cond
+           ((string-match "[LS]" (aref item 6))
+            (setq active t))
+           ((string-match "I" (aref item 6))
+            (setq inactive t))))
+        (when btpd-hide-inactive-torrents
+          (widget-insert (format "\nShown %d/%d\n" item-count (length all))
+                         "Inactive torrents are hidden\n"))
+        (widget-insert "\n")
+        (when active
+          (btpd-create-stop-button 'btpd-refresh-panel)
+          (widget-insert "  "))
+        (when inactive
+          (btpd-create-resume-button 'btpd-refresh-panel)
+          (widget-insert "  "))
+        (btpd-create-delete-button 'btpd-refresh-panel all)
+        (widget-insert "\n"))
       (widget-insert "\n")
-      (when active
-        (btpd-create-stop-button 'btpd-refresh-panel)
-        (widget-insert "  "))
-      (when inactive
-        (btpd-create-resume-button 'btpd-refresh-panel)
-        (widget-insert "  "))
-      (btpd-create-delete-button 'btpd-refresh-panel all)
-      (widget-insert "\n"))
-    (widget-insert "\n")
-    (btpd-create-refresh-button 'btpd-refresh-panel)
-    (widget-insert "\n")
-    (widget-setup)
-    (goto-char (or position (point-min)))
-    (widget-forward 1)))
+      (btpd-create-refresh-button 'btpd-refresh-panel)
+      (widget-insert "\n")
+      (widget-setup)
+      (goto-char (or position (point-min)))
+      (widget-forward 1))))
 
 (defun btpd-update-control-panel (&optional current-item)
   "Update control panel if it exists somewhere."
@@ -634,11 +638,6 @@ a hook function to use at the buffer killing."
              (featurep 'emacspeak))
     (emacspeak-auditory-icon 'close-object)
     (emacspeak-speak-mode-line)))
-
-;;}}}
-;;{{{ Key definitions
-
-(define-key btpd-control-mode-map (kbd "q") 'btpd-quit)
 
 ;;}}}
 
