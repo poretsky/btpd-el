@@ -119,13 +119,6 @@ options that affect Btpd control panel appearance."
   :set 'btpd-set-display-option
   :group 'btpd)
 
-(defcustom btpd-hide-inactive-torrents nil
-  "Whether inactive (stopped) torrents should be hidden. Be careful:
-The `Delete all' operation will erase hidden torrents as well."
-  :type 'boolean
-  :set 'btpd-set-display-option
-  :group 'btpd)
-
 ;;}}}
 ;;{{{ Utility functions
 
@@ -423,8 +416,6 @@ Navigate around and press buttons.
          (memq 'state btpd-display-info))
     (widget-insert "About to stop\n"))
    ((string-equal "I" (aref item 6))
-    (when (memq 'state btpd-display-info)
-      (widget-insert "Inactive\n"))
     (btpd-create-resume-button panel item panel-arg)
     (widget-insert "  "))
    ((and (string-equal "L" (aref item 6))
@@ -504,6 +495,23 @@ Navigate around and press buttons.
 ;;}}}
 ;;{{{ Main control panel
 
+(defvar btpd-visible nil
+  "Torrent types to display.")
+
+(defun btpd-toggle-visibility (widget &rest ignore)
+  "Toggle visibility button action."
+  (let ((position (point)))
+    (if (memq (widget-get widget ':torrent-type) btpd-visible)
+        (setq btpd-visible (delq (widget-get widget ':torrent-type) btpd-visible))
+      (add-to-list 'btpd-visible (widget-get widget ':torrent-type)))
+    (btpd-refresh-panel)
+    (goto-char position)))
+
+(defun btpd-visibility-toggle-button-get-help (widget)
+  "Generate help message for visibility toggle button."
+  (format "%s torrents visibility"
+          (symbol-name (widget-get widget ':torrent-type))))
+
 (defun btpd-create-add-new-button ()
   "Create add new button."
   (widget-create 'push-button
@@ -521,6 +529,39 @@ Navigate around and press buttons.
                  :notify (lambda (&rest ignore)
                            (customize-group 'btpd))
                  "Customize"))
+
+(defun btpd-create-visibility-toggle-button (torrent-type)
+  "Create visibility toggle button for specified torrent type."
+  (widget-create 'toggle
+                 :value (memq torrent-type btpd-visible)
+                 :on "Hide"
+                 :off "Show"
+                 :torrent-type torrent-type
+                 :help-echo 'btpd-visibility-toggle-button-get-help
+                 :notify 'btpd-toggle-visibility))
+
+(defun btpd-show-torrents (torrents-list header &optional current-item)
+  "Show torrents list and optionally try to determine position
+of specified current item. Return item position or nil."
+  (let ((torrents (and (boundp torrents-list) (symbol-value torrents-list)))
+        (position nil)
+        (item-count 0))
+    (when torrents
+      (widget-insert (format "%s %-5d" header (length torrents)))
+      (btpd-create-visibility-toggle-button torrents-list)
+      (when (memq torrents-list btpd-visible)
+        (dolist (item torrents)
+          (when (or (and (consp current-item)
+                         (eq (car current-item) torrents-list)
+                         (integerp (cdr current-item))
+                         (= (cdr current-item) item-count))
+                    (and (stringp current-item)
+                         (string-equal (aref item 1) current-item)))
+            (setq position (point)))
+          (btpd-display-torrent item 'btpd-refresh-panel (cons torrents-list item-count))
+          (incf item-count))
+        (widget-insert "\n")))
+    position))
 
 (defun btpd-refresh-panel (&optional current-item)
   "Refresh Btpd control panel and go to specified current item if any."
@@ -540,30 +581,19 @@ Navigate around and press buttons.
           (active nil)
           (inactive nil)
           (all nil)
-          (position nil)
-          (item-count 0))
+          (position nil))
       (when torrents
-        (widget-insert "\nTorrents under control:\n")
+        (widget-insert "\nTorrents under control:\n\n")
         (dolist (item torrents)
-          (unless (and btpd-hide-inactive-torrents
-                       (string-match "[-I]" (aref item 6)))
-            (when (or (and (integerp current-item)
-                           (= item-count current-item))
-                      (and (stringp current-item)
-                           (string-equal (aref item 1) current-item)))
-              (setq position (point)))
-            (btpd-display-torrent item 'btpd-refresh-panel item-count)
-            (incf item-count))
-          (push (cons (aref item 0) (cons (aref item 1) (aref item 3))) all)
-          (cond
-           ((string-match "[LS]" (aref item 6))
-            (setq active t))
-           ((string-match "I" (aref item 6))
-            (setq inactive t))))
-        (when btpd-hide-inactive-torrents
-          (widget-insert (format "\nShown %d/%d\n" item-count (length all))
-                         "Inactive torrents are hidden\n"))
-        (widget-insert "\n")
+          (add-to-list
+           (if (string-match "[-I]" (aref item 6))
+               'inactive
+             'active)
+           item 'append)
+          (push (cons (aref item 0) (cons (aref item 1) (aref item 3))) all))
+        (setq position (btpd-show-torrents 'active "Active:  " current-item)
+              position (or (btpd-show-torrents 'inactive "Inactive:" current-item) position))
+        (widget-insert (format "Total:    %d\n\n" (length all)))
         (when active
           (btpd-create-stop-button 'btpd-refresh-panel)
           (widget-insert "  "))
