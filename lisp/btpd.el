@@ -652,7 +652,11 @@ of specified current item. Return item position or nil."
   (with-current-buffer (get-buffer-create btpd-control-panel)
     (kill-all-local-variables)
     (btpd-refresh-panel))
-  (switch-to-buffer btpd-control-panel))
+  (switch-to-buffer btpd-control-panel)
+  (when (and (interactive-p)
+             (featurep 'emacspeak))
+    (emacspeak-auditory-icon 'open-object)
+    (emacspeak-speak-buffer -1)))
 
 (defun btpd-add (torrent-file &optional cleanup-function)
   "Interactively add new torrent from specified file.
@@ -668,7 +672,11 @@ a hook function to use at the buffer killing."
       (btpd-initialize-new-torrent-confirmation (aref torrent-info 0)
                                                 (aref torrent-info 5)
                                                 (aref torrent-info 7)))
-    (switch-to-buffer panel)))
+    (switch-to-buffer panel))
+  (when (and (interactive-p)
+             (featurep 'emacspeak))
+    (emacspeak-auditory-icon 'open-object)
+    (emacspeak-speak-buffer -1)))
 
 (defun btpd-add-from-dired ()
   "Add torrent from a file in dired."
@@ -682,7 +690,7 @@ a hook function to use at the buffer killing."
   (when (and (interactive-p)
              (featurep 'emacspeak))
     (emacspeak-auditory-icon 'open-object)
-    (emacspeak-speak-line)))
+    (emacspeak-speak-buffer -1)))
 
 (defun btpd-panel-next-section ()
   "Go to the next section in the control panel."
