@@ -274,7 +274,9 @@ by a vector of 14 strings filled with following information:
   (let ((map (make-sparse-keymap)))
     (suppress-keymap map)
     (set-keymap-parent map widget-keymap)
-    (define-key map "q" 'btpd-quit)
+    (define-key map (kbd "<next>") 'btpd-panel-next-section)
+    (define-key map (kbd "<prior>") 'btpd-panel-prev-section)
+    (define-key map (kbd "q") 'btpd-quit)
     map)
   "Keymap for Btpd control panel.")
 
@@ -294,6 +296,19 @@ Navigate around and press buttons.
 
 (defconst btpd-new-torrent-confirmation-dialog "*Btpd new torrent*"
   "Buffer name for new torrent confirmation dialog.")
+
+(defvar btpd-panel-sections-list nil
+  "List of a control panel sections. Each item is a cons cell
+containing section start position in it's car and end position in cdr.")
+
+(defmacro btpd-panel-section (&rest body)
+  "Evaluate body saving current buffer positions before and after
+evaluation as a control panel section markers.
+Return body evaluation result."
+  `(let ((start (point)))
+     (prog1
+         (progn ,@body)
+       (add-to-list 'btpd-panel-sections-list (cons start (point)) 'append))))
 
 (defun btpd-action (button &rest ignore)
   "General Btpd button click reaction."
@@ -394,45 +409,46 @@ Navigate around and press buttons.
 (defun btpd-display-torrent (item panel &optional panel-arg)
   "Arrange a torrent item control section on a control panel."
   (widget-insert "\n")
-  (btpd-create-torrent-handle (aref item 2)
-                              (btpd-torrent-file (aref item 1))
-                              (aref item 3))
-  (widget-insert "\n")
-  (when (memq 'size btpd-display-info)
-    (widget-insert "Size: " (btpd-format-size (aref item 5)) "\n"))
-  (when (memq 'available btpd-display-info)
-    (widget-insert "Available " (aref item 7) ": " (btpd-format-size (aref item 10)) "\n"))
-  (when (memq 'uploaded btpd-display-info)
-    (widget-insert "Uploaded: " (btpd-format-size (aref item 12)) "\n"))
-  (when (memq 'ratio btpd-display-info)
-    (widget-insert "Ratio: " (aref item 8) "\n"))
-  (cond
-   ((string-equal "+" (aref item 6))
-    (when (memq 'state btpd-display-info)
-      (widget-insert "About to start\n"))
-    (btpd-create-stop-button panel item panel-arg)
-    (widget-insert "  "))
-   ((and (string-equal "-" (aref item 6))
-         (memq 'state btpd-display-info))
-    (widget-insert "About to stop\n"))
-   ((string-equal "I" (aref item 6))
-    (btpd-create-resume-button panel item panel-arg)
-    (widget-insert "  "))
-   ((and (string-equal "L" (aref item 6))
-         (memq 'leeching btpd-display-info))
-    (widget-insert "Leeching at " (btpd-format-value (aref item 11)) "B/s\n"))
-   ((and (not (string-equal "S" (aref item 6)))
-         (memq 'state btpd-display-info))
-    (widget-insert "Undetermined state\n")))
-  (when (string-match "[LS]" (aref item 6))
-    (when (memq 'seeding btpd-display-info)
-      (widget-insert "Seeding at " (btpd-format-value (aref item 13)) "B/s\n"))
-    (when (memq 'peers btpd-display-info)
-      (widget-insert "Number of peers: " (aref item 9) "\n"))
-    (btpd-create-stop-button panel item panel-arg)
-    (widget-insert "  "))
-  (btpd-create-delete-button panel item panel-arg)
-  (widget-insert "\n"))
+  (btpd-panel-section
+   (btpd-create-torrent-handle (aref item 2)
+                               (btpd-torrent-file (aref item 1))
+                               (aref item 3))
+   (widget-insert "\n")
+   (when (memq 'size btpd-display-info)
+     (widget-insert "Size: " (btpd-format-size (aref item 5)) "\n"))
+   (when (memq 'available btpd-display-info)
+     (widget-insert "Available " (aref item 7) ": " (btpd-format-size (aref item 10)) "\n"))
+   (when (memq 'uploaded btpd-display-info)
+     (widget-insert "Uploaded: " (btpd-format-size (aref item 12)) "\n"))
+   (when (memq 'ratio btpd-display-info)
+     (widget-insert "Ratio: " (aref item 8) "\n"))
+   (cond
+    ((string-equal "+" (aref item 6))
+     (when (memq 'state btpd-display-info)
+       (widget-insert "About to start\n"))
+     (btpd-create-stop-button panel item panel-arg)
+     (widget-insert "  "))
+    ((and (string-equal "-" (aref item 6))
+          (memq 'state btpd-display-info))
+     (widget-insert "About to stop\n"))
+    ((string-equal "I" (aref item 6))
+     (btpd-create-resume-button panel item panel-arg)
+     (widget-insert "  "))
+    ((and (string-equal "L" (aref item 6))
+          (memq 'leeching btpd-display-info))
+     (widget-insert "Leeching at " (btpd-format-value (aref item 11)) "B/s\n"))
+    ((and (not (string-equal "S" (aref item 6)))
+          (memq 'state btpd-display-info))
+     (widget-insert "Undetermined state\n")))
+   (when (string-match "[LS]" (aref item 6))
+     (when (memq 'seeding btpd-display-info)
+       (widget-insert "Seeding at " (btpd-format-value (aref item 13)) "B/s\n"))
+     (when (memq 'peers btpd-display-info)
+       (widget-insert "Number of peers: " (aref item 9) "\n"))
+     (btpd-create-stop-button panel item panel-arg)
+     (widget-insert "  "))
+   (btpd-create-delete-button panel item panel-arg)
+   (widget-insert "\n")))
 
 ;;}}}
 ;;{{{ New torrent adding dialog
@@ -460,17 +476,19 @@ Navigate around and press buttons.
       (remove-overlays))
     (btpd-control-mode)
     (set (make-local-variable 'btpd-new-torrent) (vector name file hash))
-    (widget-insert "You are about to add new torrent\n")
-    (btpd-create-torrent-handle (aref btpd-new-torrent 0) (aref btpd-new-torrent 1))
-    (widget-insert "\n")
-    (if duplicate
-        (widget-insert "But it seems you have it already. See below.\n"
-                       "Explore the situation and delete the duplicate if you wish to proceed.\n")
-      (widget-insert "Choose an appropriate action below. To preview torrent content click on it's name.\n")
-      (btpd-create-add-ok-button)
-      (widget-insert "  "))
-    (btpd-create-close-button "Cancel" "Cancel the operation and close dialog panel")
-    (widget-insert "\n")
+    (set (make-local-variable 'btpd-panel-sections-list) nil)
+    (btpd-panel-section
+     (widget-insert "You are about to add new torrent\n")
+     (btpd-create-torrent-handle (aref btpd-new-torrent 0) (aref btpd-new-torrent 1))
+     (widget-insert "\n")
+     (if duplicate
+         (widget-insert "But it seems you have it already. See below.\n"
+                        "Explore the situation and delete the duplicate if you wish to proceed.\n")
+       (widget-insert "Choose an appropriate action below. To preview torrent content click on it's name.\n")
+       (btpd-create-add-ok-button)
+       (widget-insert "  "))
+     (btpd-create-close-button "Cancel" "Cancel the operation and close dialog panel")
+     (widget-insert "\n"))
     (when duplicate
       (btpd-display-torrent duplicate
                             (lambda (&rest ignore)
@@ -479,8 +497,9 @@ Navigate around and press buttons.
                                   (btpd-refresh-panel)))
                               (btpd-refresh-new-torrent-confirmation)))
       (widget-insert "\n")
-      (btpd-create-refresh-button 'btpd-refresh-new-torrent-confirmation)
-      (widget-insert "\n"))
+      (btpd-panel-section
+       (btpd-create-refresh-button 'btpd-refresh-new-torrent-confirmation)
+       (widget-insert "\n")))
     (widget-setup))
   (goto-char (point-min))
   (widget-forward 2))
@@ -547,8 +566,9 @@ of specified current item. Return item position or nil."
         (position nil)
         (item-count 0))
     (when torrents
-      (widget-insert (format "%s %-5d" header (length torrents)))
-      (btpd-create-visibility-toggle-button torrents-list)
+      (btpd-panel-section
+       (widget-insert (format "%s %-5d" header (length torrents)))
+       (btpd-create-visibility-toggle-button torrents-list))
       (when (memq torrents-list btpd-visible)
         (dolist (item torrents)
           (when (or (and (consp current-item)
@@ -570,13 +590,15 @@ of specified current item. Return item position or nil."
     (when (fboundp 'remove-overlays)
       (remove-overlays))
     (btpd-control-mode)
+    (set (make-local-variable 'btpd-panel-sections-list) nil)
     (widget-insert "Btpd control panel\n\n")
-    (btpd-create-add-new-button)
-    (widget-insert "  ")
-    (btpd-create-close-button "Close" "Close control panel")
-    (widget-insert "  ")
-    (btpd-create-customize-button)
-    (widget-insert "\n")
+    (btpd-panel-section
+     (btpd-create-add-new-button)
+     (widget-insert "  ")
+     (btpd-create-close-button "Close" "Close control panel")
+     (widget-insert "  ")
+     (btpd-create-customize-button)
+     (widget-insert "\n"))
     (let ((torrents (btpd-get-info))
           (active nil)
           (inactive nil)
@@ -593,18 +615,22 @@ of specified current item. Return item position or nil."
           (push (cons (aref item 0) (cons (aref item 1) (aref item 3))) all))
         (setq position (btpd-show-torrents 'active "Active:  " current-item)
               position (or (btpd-show-torrents 'inactive "Inactive:" current-item) position))
-        (widget-insert (format "Total:    %d\n\n" (length all)))
-        (when active
-          (btpd-create-stop-button 'btpd-refresh-panel)
-          (widget-insert "  "))
-        (when inactive
-          (btpd-create-resume-button 'btpd-refresh-panel)
-          (widget-insert "  "))
-        (btpd-create-delete-button 'btpd-refresh-panel all)
-        (widget-insert "\n"))
+        (btpd-panel-section
+         (widget-insert (format "Total:    %d\n" (length all))))
+        (widget-insert "\n")
+        (btpd-panel-section
+         (when active
+           (btpd-create-stop-button 'btpd-refresh-panel)
+           (widget-insert "  "))
+         (when inactive
+           (btpd-create-resume-button 'btpd-refresh-panel)
+           (widget-insert "  "))
+         (btpd-create-delete-button 'btpd-refresh-panel all)
+         (widget-insert "\n")))
       (widget-insert "\n")
-      (btpd-create-refresh-button 'btpd-refresh-panel)
-      (widget-insert "\n")
+      (btpd-panel-section
+       (btpd-create-refresh-button 'btpd-refresh-panel)
+       (widget-insert "\n"))
       (widget-setup)
       (goto-char (or position (point-min)))
       (widget-forward 1))))
@@ -656,6 +682,30 @@ a hook function to use at the buffer killing."
   (when (and (interactive-p)
              (featurep 'emacspeak))
     (emacspeak-auditory-icon 'open-object)
+    (emacspeak-speak-line)))
+
+(defun btpd-panel-next-section ()
+  "Go to the next section in the control panel."
+  (interactive)
+  (goto-char
+   (do ((sections btpd-panel-sections-list (cdr sections)))
+       ((or (null sections) (< (point) (caar sections)))
+        (caar (or sections btpd-panel-sections-list)))))
+  (when (and (interactive-p)
+             (featurep 'emacspeak))
+    (emacspeak-auditory-icon 'large-movement)
+    (emacspeak-speak-line)))
+
+(defun btpd-panel-prev-section ()
+  "Go to the previous section in the control panel."
+  (interactive)
+  (goto-char
+   (do ((sections (reverse btpd-panel-sections-list) (cdr sections)))
+       ((or (null sections) (>= (point) (cdar sections)))
+        (caar (or sections (last btpd-panel-sections-list))))))
+  (when (and (interactive-p)
+             (featurep 'emacspeak))
+    (emacspeak-auditory-icon 'large-movement)
     (emacspeak-speak-line)))
 
 (defun btpd-quit ()
