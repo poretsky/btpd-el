@@ -74,9 +74,38 @@ and modified by other functions. It's elements keep the following data:
 8. Tracker URLs list.")
 (make-variable-buffer-local 'btpd-view-torrent-info)
 
-(defvar btpd-view-keymap (make-sparse-keymap)
+(defvar btpd-view-keymap
+  (let ((map (make-sparse-keymap)))
+    (suppress-keymap map)
+    (set-keymap-parent map dired-mode-map)
+    (define-key map (kbd "z") 'btpd-view-size)
+    (loop for op in
+          '(dired-advertised-find-file
+            dired-find-file
+            dired-view-file)
+          do
+          (eval
+           `(define-key map [remap ,op] 'btpd-view-visit-item)))
+    (loop for op in
+          '(dired-flag-file-deletion
+            dired-do-flagged-delete
+            dired-do-delete
+            dired-do-chgrp
+            dired-do-chmod
+            dired-do-chown
+            dired-do-rename
+            dired-do-rename-regexp
+            dired-do-touch
+            dired-do-compress
+            dired-do-byte-compile
+            dired-do-query-replace-regexp
+            dired-sort-toggle-or-edit
+            wdired-change-to-wdired-mode)
+          do
+          (eval
+           `(define-key map [remap ,op] 'btpd-view-disabled)))
+    map)
   "Keymap for torrent content virtual tree navigation.")
-(set-keymap-parent btpd-view-keymap dired-mode-map)
 
 (defun btpd-view-buffer-setup (torrent-info)
   "Being provided by the torrent info, fill current buffer with the
@@ -284,36 +313,6 @@ is always ignored even if it is selected."
   "Signal a disabled operation."
   (interactive)
   (error "The operation is not available here"))
-
-;;}}}
-;;{{{ Key definitions
-
-(define-key btpd-view-keymap (kbd "z") 'btpd-view-size)
-
-(loop for op in
-      '(dired-advertised-find-file
-        dired-find-file
-        dired-view-file)
-      do
-      (eval
-       `(define-key btpd-view-keymap [remap ,op] 'btpd-view-visit-item)))
-
-(loop for op in
-      '(dired-flag-file-deletion
-        dired-do-flagged-delete
-        dired-do-delete
-        dired-do-chgrp
-        dired-do-chmod
-        dired-do-chown
-        dired-do-rename
-        dired-do-rename-regexp
-        dired-do-touch
-        dired-do-compress
-        dired-sort-toggle-or-edit
-        wdired-change-to-wdired-mode)
-      do
-      (eval
-       `(define-key btpd-view-keymap [remap ,op] 'btpd-view-disabled)))
 
 ;;}}}
 

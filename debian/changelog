@@ -1,8 +1,21 @@
-btpd-el (1.5precise1) precise; urgency=low
+btpd-el (1.6precise1) precise; urgency=low
 
   * Per distribution build.
 
- -- Igor B. Poretsky <poretsky@mlbox.ru>  Fri, 28 Jun 2013 15:28:48 +0400
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Sat, 24 May 2014 09:17:04 +0400
+
+btpd-el (1.6) unstable; urgency=low
+
+  * Fixed treatment of compressed torrent files downloaded by clicking a
+    link in w3m.
+  * More consistent keymap definition for torrent view mode.
+  * Main control panel revised. Active and inactive torrents are now
+    placed in separate lists that can be individually shown or hidden.
+  * Implemented navigation by sections in control panel using PGUP and
+    PGDN keys.
+  * Better integration with Emacspeak.
+
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Sat, 24 May 2014 09:05:16 +0400
 
 btpd-el (1.5) unstable; urgency=low
 
