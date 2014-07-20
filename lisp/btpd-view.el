@@ -258,7 +258,7 @@ the base directory where actual content resides if it is available.
 The third argument allows to specify an alternative torrent name
 that will be inherited by the buffer displaying the content."
   (interactive "fTorrent file: ")
-  (let ((torrent-info (btpd-info-extract torrent-file)))
+  (let ((torrent-info (btpd-info-extract (expand-file-name torrent-file))))
     (when base-dir
       (aset torrent-info 5 (expand-file-name base-dir))
       (aset torrent-info 6 t))
@@ -267,7 +267,11 @@ that will be inherited by the buffer displaying the content."
                                 (nth 5 (aref torrent-info 4))))
     (with-current-buffer (get-buffer-create (or name (aref torrent-info 0)))
       (btpd-view-buffer-setup torrent-info)
-      (switch-to-buffer (current-buffer)))))
+      (switch-to-buffer (current-buffer))
+      (when (and (interactive-p)
+                 (featurep 'emacspeak))
+        (emacspeak-auditory-icon 'open-object)
+        (emacspeak-speak-mode-line)))))
 
 (defun btpd-view-visit-item ()
   "Visit file or directory at point."
@@ -283,15 +287,26 @@ that will be inherited by the buffer displaying the content."
                                   (aref btpd-view-torrent-info 5)))
           (btpd-view-buffer-setup btpd-view-torrent-info)
           (when position
-            (dired-goto-file position)))
-      (call-interactively 'dired-view-file))))
+            (dired-goto-file position))
+          (when (and (interactive-p)
+                     (featurep 'emacspeak))
+            (emacspeak-auditory-icon 'open-object)
+            (emacspeak-speak-mode-line)))
+      (if (interactive-p)
+          (call-interactively 'dired-view-file)
+        (dired-view-file)))))
 
 (defun btpd-view-from-dired ()
   "Preview torrent content from a file in dired."
   (interactive)
   (let ((file (btpd-view-get-filename)))
     (if (file-regular-p file)
-        (btpd-view file)
+        (progn
+          (btpd-view file)
+          (when (and (interactive-p)
+                     (featurep 'emacspeak))
+            (emacspeak-auditory-icon 'open-object)
+            (emacspeak-speak-mode-line)))
       (error "Not a regular file"))))
 
 (defun btpd-view-size (&optional arg)

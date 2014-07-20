@@ -1,8 +1,17 @@
-btpd-el (1.6precise1) precise; urgency=low
+btpd-el (1.7precise1) precise; urgency=low
 
   * Per distribution build.
 
- -- Igor B. Poretsky <poretsky@mlbox.ru>  Sat, 24 May 2014 09:17:04 +0400
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Sun, 20 Jul 2014 10:21:58 +0400
+
+btpd-el (1.7) unstable; urgency=low
+
+  * Fixed torrent content extraction. Files in virtual directories are
+    now alphabetically sorted.
+  * Fixed file path parsing.
+  * Better integration with Emacspeak.
+
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Sun, 20 Jul 2014 10:14:30 +0400
 
 btpd-el (1.6) unstable; urgency=low
 
