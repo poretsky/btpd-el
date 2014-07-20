@@ -258,7 +258,7 @@ the base directory where actual content resides if it is available.
 The third argument allows to specify an alternative torrent name
 that will be inherited by the buffer displaying the content."
   (interactive "fTorrent file: ")
-  (let ((torrent-info (btpd-info-extract torrent-file)))
+  (let ((torrent-info (btpd-info-extract (expand-file-name torrent-file))))
     (when base-dir
       (aset torrent-info 5 (expand-file-name base-dir))
       (aset torrent-info 6 t))
