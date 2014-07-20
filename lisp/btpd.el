@@ -403,7 +403,10 @@ Return body evaluation result."
                    :notify (lambda (handle &rest ignore)
                              (btpd-view (widget-get handle ':torrent-file)
                                         (widget-get handle ':content-path)
-                                        (widget-get handle ':tag)))
+                                        (widget-get handle ':tag))
+                             (when (featurep 'emacspeak)
+                               (emacspeak-auditory-icon 'open-object)
+                               (emacspeak-speak-mode-line)))
                    name)))
 
 (defun btpd-display-torrent (item panel &optional panel-arg)
