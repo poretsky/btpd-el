@@ -1,3 +1,12 @@
+btpd-el (1.7) unstable; urgency=low
+
+  * Fixed torrent content extraction. Files in virtual directories are
+    now alphabetically sorted.
+  * Fixed file path parsing.
+  * Better integration with Emacspeak.
+
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Sun, 20 Jul 2014 10:14:30 +0400
+
 btpd-el (1.6) unstable; urgency=low
 
   * Fixed treatment of compressed torrent files downloaded by clicking a
