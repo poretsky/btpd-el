@@ -1,3 +1,10 @@
+btpd-el (1.8) unstable; urgency=low
+
+  * Don't ignore referer when retrieving torrents.
+  * Properly restore page view after torrent adding dialog.
+
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Tue, 01 Sep 2015 13:03:00 +0300
+
 btpd-el (1.7) unstable; urgency=low
 
   * Fixed torrent content extraction. Files in virtual directories are
