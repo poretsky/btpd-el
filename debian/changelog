@@ -1,3 +1,10 @@
+btpd-el (1.8precise1) precise; urgency=low
+
+  * Don't ignore referer when retrieving torrents.
+  * Properly restore page view after torrent adding dialog.
+
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Tue, 01 Sep 2015 13:07:28 +0300
+
 btpd-el (1.7precise1) precise; urgency=low
 
   * Per distribution build.

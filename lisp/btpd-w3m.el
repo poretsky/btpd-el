@@ -70,12 +70,22 @@ if there is no item for the respective content type already."
                     (file-modes-symbolic-to-number "go+rx" (file-modes working-directory)))
     (lexical-let ((file (expand-file-name "torrent" working-directory))
                   (pos (point-marker))
+                  (url url)
                   (curl w3m-current-url))
       (w3m-process-with-null-handler
-        (w3m-process-do
-            (success (w3m-download url file nil handler))
+        (w3m-process-do-with-temp-buffer
+            (success (progn
+                       (w3m-clear-local-variables)
+                       (setq w3m-current-url url)
+                       (w3m-retrieve url t nil nil curl handler)))
           (if (not success)
               (delete-directory (file-name-directory file) t)
+	    (let ((buffer-file-coding-system 'binary)
+		  (coding-system-for-write 'binary)
+		  jka-compr-compression-info-list
+		  format-alist)
+              (write-region (point-min) (point-max) file)
+              (w3m-touch-file file (w3m-last-modified url)))
             (when (and (equal curl w3m-current-url)
                        (buffer-name (marker-buffer pos)))
               (with-current-buffer (marker-buffer pos)
@@ -91,7 +101,8 @@ if there is no item for the respective content type already."
                                    (= (length btpd-new-torrent) 3)
                                    (stringp (aref btpd-new-torrent 1)))
                           (cd "~")
-                          (delete-directory (file-name-directory (aref btpd-new-torrent 1)) t))))))))))
+                          (delete-directory (file-name-directory (aref btpd-new-torrent 1)) t))
+                        (switch-to-buffer (marker-buffer pos))))))))))
 
 ;;}}}
 ;;{{{ W3m setup for cooperation with btpd daemon
