@@ -177,8 +177,8 @@ All these lists are maintained in the reverse order."
   "Associated list of unit factors and respective signs.")
 
 (defun btpd-format-value (value)
-  "Transform a numeric value into convenient string representation.
-Accepts string representation of a source value as well."
+  "Transform a pure numeric value into convenient string representation.
+Accepts string number representation as the source value as well."
   (let ((src (or (and (stringp value) (string-to-number value)) value))
         (units btpd-value-format-units))
     (while (and units (< src (caar units)))
