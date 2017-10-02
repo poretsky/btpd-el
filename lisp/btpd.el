@@ -58,6 +58,7 @@
 (require 'custom)
 (require 'widget)
 (require 'dired)
+(require 'time-date)
 (require 'btpd-utils)
 (require 'btpd-bindings)
 
@@ -106,13 +107,14 @@ options that affect Btpd control panel appearance."
     (btpd-update-control-panel)))
 
 (defcustom btpd-display-info
-  '(size available uploaded state leeching seeding ratio peers)
+  '(size available uploaded state leeching time seeding ratio peers)
   "Choose what the information to display for torrents."
   :type '(set (const :tag "Total size" size)
               (const :tag "Amount available" available)
               (const :tag "Amount uploaded" uploaded)
               (const :tag "State" state)
               (const :tag "Leeching rate" leeching)
+              (const :tag "Estimated time" time)
               (const :tag "Seeding rate" seeding)
               (const :tag "Ratio" ratio)
               (const :tag "Number of peers" peers))
@@ -437,10 +439,15 @@ Return body evaluation result."
     ((string-equal "I" (aref item 6))
      (btpd-create-resume-button panel item panel-arg)
      (widget-insert "  "))
-    ((and (string-equal "L" (aref item 6))
-          (memq 'leeching btpd-display-info))
+    ((string-equal "L" (aref item 6))
      (when (> (string-to-number (aref item 11)) 0)
-       (widget-insert "Leeching at " (btpd-format-value (aref item 11)) "B/s\n")))
+       (when (memq 'leeching btpd-display-info)
+         (widget-insert "Leeching at " (btpd-format-value (aref item 11)) "B/s\n"))
+       (when (memq 'time btpd-display-info)
+         (widget-insert "Estimated time: " (format-seconds "%D %H %M %z%S\n"
+                                                           (/ (- (string-to-number (aref item 5))
+                                                                 (string-to-number (aref item 10)))
+                                                              (string-to-number (aref item 11))))))))
     ((and (not (string-equal "S" (aref item 6)))
           (memq 'state btpd-display-info))
      (widget-insert "Undetermined state\n")))
