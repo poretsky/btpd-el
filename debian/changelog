@@ -1,3 +1,13 @@
+btpd-el (1.9) unstable; urgency=low
+
+  * Torrent state display enhancement.
+  * Estimated download time display.
+  * Separate sections for leeching and seeding torrents.
+  * Added summary traffic info.
+  * Added hot key for buffer refresh.
+
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Tue, 03 Oct 2017 23:34:16 +0300
+
 btpd-el (1.8) unstable; urgency=low
 
   * Don't ignore referer when retrieving torrents.
