@@ -619,26 +619,32 @@ of specified current item. Return item position or nil."
      (btpd-create-customize-button)
      (widget-insert "\n"))
     (let ((torrents (btpd-get-info))
-          (active nil)
+          (leeching nil)
+          (seeding nil)
           (inactive nil)
+          (interim nil)
           (all nil)
           (position nil))
       (when torrents
         (widget-insert "\nTorrents under control:\n\n")
         (dolist (item torrents)
           (add-to-list
-           (if (string-match "[-I]" (aref item 6))
-               'inactive
-             'active)
+           (cond
+            ((string-equal "L" (aref item 6)) 'leeching)
+            ((string-equal "S" (aref item 6)) 'seeding)
+            ((string-equal "I" (aref item 6)) 'inactive)
+            (t 'interim))
            item 'append)
           (push (cons (aref item 0) (cons (aref item 1) (aref item 3))) all))
-        (setq position (btpd-show-torrents 'active "Active:  " current-item)
-              position (or (btpd-show-torrents 'inactive "Inactive:" current-item) position))
+        (setq position (btpd-show-torrents 'leeching "Leeching:" current-item)
+              position (or (btpd-show-torrents 'seeding "Seeding: " current-item) position)
+              position (or (btpd-show-torrents 'inactive "Inactive:" current-item) position)
+              position (or (btpd-show-torrents 'interim "Interim: " current-item) position))
         (btpd-panel-section
          (widget-insert (format "Total:    %d\n" (length all))))
         (widget-insert "\n")
         (btpd-panel-section
-         (when active
+         (when (or leeching seeding)
            (btpd-create-stop-button 'btpd-refresh-panel)
            (widget-insert "  "))
          (when inactive
