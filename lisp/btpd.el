@@ -578,7 +578,7 @@ Return body evaluation result."
                  :help-echo 'btpd-visibility-toggle-button-get-help
                  :notify 'btpd-toggle-visibility))
 
-(defun btpd-show-torrents (torrents-list header &optional current-item)
+(defun btpd-show-torrents (torrents-list header current-item &optional subheader-format peers rate)
   "Show torrents list and optionally try to determine position
 of specified current item. Return item position or nil."
   (let ((torrents (and (boundp torrents-list) (symbol-value torrents-list)))
@@ -587,7 +587,12 @@ of specified current item. Return item position or nil."
     (when torrents
       (btpd-panel-section
        (widget-insert (format "%s %-5d" header (length torrents)))
-       (btpd-create-visibility-toggle-button torrents-list))
+       (btpd-create-visibility-toggle-button torrents-list)
+       (when (and subheader-format (> peers 0))
+         (widget-insert "  (" (format subheader-format peers))
+         (when (> rate 0)
+           (widget-insert " at " (btpd-format-value rate) "B/s altogether"))
+         (widget-insert ")\n")))
       (when (memq torrents-list btpd-visible)
         (dolist (item torrents)
           (when (or (and (consp current-item)
@@ -624,20 +629,33 @@ of specified current item. Return item position or nil."
           (inactive nil)
           (interim nil)
           (all nil)
-          (position nil))
+          (position nil)
+          (leechers 0)
+          (seeders 0)
+          (download 0)
+          (upload 0))
       (when torrents
         (widget-insert "\nTorrents under control:\n\n")
         (dolist (item torrents)
           (add-to-list
            (cond
-            ((string-equal "L" (aref item 6)) 'leeching)
-            ((string-equal "S" (aref item 6)) 'seeding)
+            ((string-equal "L" (aref item 6))
+             (incf seeders (string-to-number (aref item 9)))
+             (incf download (string-to-number (aref item 11)))
+             'leeching)
+            ((string-equal "S" (aref item 6))
+             (incf leechers (string-to-number (aref item 9)))
+             (incf upload (string-to-number (aref item 13)))
+             'seeding)
             ((string-equal "I" (aref item 6)) 'inactive)
             (t 'interim))
            item 'append)
           (push (cons (aref item 0) (cons (aref item 1) (aref item 3))) all))
-        (setq position (btpd-show-torrents 'leeching "Leeching:" current-item)
-              position (or (btpd-show-torrents 'seeding "Seeding: " current-item) position)
+        (setq position (btpd-show-torrents 'leeching "Leeching:" current-item
+                                           "from %d seeders" seeders download)
+              position (or (btpd-show-torrents 'seeding "Seeding: " current-item
+                                               "for %d leechers" leechers upload)
+                           position)
               position (or (btpd-show-torrents 'inactive "Inactive:" current-item) position)
               position (or (btpd-show-torrents 'interim "Interim: " current-item) position))
         (btpd-panel-section
