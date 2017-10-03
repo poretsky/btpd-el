@@ -9,7 +9,7 @@ Package: btpd-el
 Architecture: all
 Depends: emacs | emacsen, btpd (>= 0.16), ${misc:Depends}
 Enhances: w3m-el
-Description: Emacs interface for the Btpd BitTorrent client
+Description: Emacs frontend for the Btpd BitTorrent client
  This package provides more or less intuitive and simple Emacs interface
  for Btpd BitTorrent client. It communicates with Emacs-w3m web browser
  allowing to start torrent download just by clicking on a respective
