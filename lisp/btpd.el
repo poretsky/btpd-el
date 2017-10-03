@@ -58,6 +58,7 @@
 (require 'custom)
 (require 'widget)
 (require 'dired)
+(require 'files)
 (require 'time-date)
 (require 'btpd-utils)
 (require 'btpd-bindings)
@@ -278,6 +279,7 @@ by a vector of 14 strings filled with following information:
     (set-keymap-parent map widget-keymap)
     (define-key map (kbd "<next>") 'btpd-panel-next-section)
     (define-key map (kbd "<prior>") 'btpd-panel-prev-section)
+    (define-key map (kbd "g") 'btpd-refresh)
     (define-key map (kbd "q") 'btpd-quit)
     map)
   "Keymap for Btpd control panel.")
@@ -538,12 +540,10 @@ Return body evaluation result."
 
 (defun btpd-toggle-visibility (widget &rest ignore)
   "Toggle visibility button action."
-  (let ((position (point)))
-    (if (memq (widget-get widget ':torrent-type) btpd-visible)
-        (setq btpd-visible (delq (widget-get widget ':torrent-type) btpd-visible))
-      (add-to-list 'btpd-visible (widget-get widget ':torrent-type)))
-    (btpd-refresh-panel)
-    (goto-char position)))
+  (if (memq (widget-get widget ':torrent-type) btpd-visible)
+      (setq btpd-visible (delq (widget-get widget ':torrent-type) btpd-visible))
+    (add-to-list 'btpd-visible (widget-get widget ':torrent-type)))
+  (btpd-refresh))
 
 (defun btpd-visibility-toggle-button-get-help (widget)
   "Generate help message for visibility toggle button."
@@ -758,6 +758,17 @@ a hook function to use at the buffer killing."
              (featurep 'emacspeak))
     (emacspeak-auditory-icon 'large-movement)
     (emacspeak-speak-line)))
+
+(defun btpd-refresh ()
+  "Update displayed information."
+  (interactive)
+  (unless (eq major-mode 'btpd-control-mode)
+    (error "Not in Btpd control panel"))
+  (let ((position (point)))
+    (if (string-equal (buffer-name) btpd-control-panel)
+        (btpd-refresh-panel)
+      (btpd-refresh-new-torrent-confirmation))
+    (goto-char position)))
 
 (defun btpd-quit ()
   "Close Btpd control panel."
