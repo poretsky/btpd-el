@@ -1,3 +1,9 @@
+btpd-el (1.9precise2) precise; urgency=low
+
+  * Minor spelling fix in README.Debian suggested by lintian.
+
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Thu, 22 Feb 2018 19:52:55 +0300
+
 btpd-el (1.9precise1) precise; urgency=low
 
   * Torrent state display enhancement.
