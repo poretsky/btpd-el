@@ -10,10 +10,11 @@ Although Btpd itself when deleting torrents always leaves their content
 untouched, from this control panel it can be cleaned out as well.
 Normally this operation requires write permissions in the directory
 where Btpd stores downloaded files. These permissions can be granted
-to an user by adding him to the "users" group. It will allow to delete
-files but not subdirectories and their content. So, sudo will be used
-automatically when necessary if enabled. It is enabled by default,
-but, of course, you can change the situation via customization options.
+to an user by adding him to the "users" group. It will allow one to
+delete files but not subdirectories and their content. So, sudo will
+be used automatically when necessary if enabled. It is enabled by
+default, but, of course, you can change the situation via
+customization options.
 
 When a torrent is to be added, the special panel is popped up
 from which you can preview torrent content and then approve
