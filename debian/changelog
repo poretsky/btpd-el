@@ -1,3 +1,13 @@
+btpd-el (1.9trusty1) trusty; urgency=low
+
+  * Per distribution build.
+  * Bumped standards version to 3.9.5.
+  * Added emacsen-compat file to prevent an error message during
+    installation.
+  * Minor spelling fix in README.Debian suggested by lintian.
+
+ -- Igor B. Poretsky <poretsky@mlbox.ru>  Thu, 22 Feb 2018 19:56:43 +0300
+
 btpd-el (1.9) unstable; urgency=low
 
   * Torrent state display enhancement.
